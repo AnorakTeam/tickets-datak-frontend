@@ -1,0 +1,10 @@
+# CODEOWNERS for tickets-datak-frontend
+#
+# Roles & Team Members:
+# - DevOps & Project Manager:   @AnorakTeam     (José Manuel Pérez)
+# - Quality Assurance (QA):     @tohond         (Omar Palencia)
+# - Coordinator & Frontend:     @juandiegosb    (Juan Sarmiento)
+# - Frontend Developer:         @CamiloGarcia11 (Camilo García)
+#
+# Global review rule for all frontend code:
+* @AnorakTeam @tohond @juandiegosb @CamiloGarcia11

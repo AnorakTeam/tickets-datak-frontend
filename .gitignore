@@ -1,0 +1,22 @@
+# Nuxt & Build Output
+.nuxt/
+.output/
+dist/
+node_modules/
+
+# Environment Variables
+.env
+.env.*
+!.env.example
+
+# Testing & Coverage
+coverage/
+*.lcov
+
+# IDE & OS
+.idea/
+.vscode/
+*.swp
+*.swo
+.DS_Store
+Thumbs.db

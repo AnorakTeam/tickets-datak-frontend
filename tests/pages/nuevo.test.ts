@@ -111,6 +111,17 @@ const globalStubs = {
       </div>
     `,
   },
+  RadicadoModal: {
+    name: 'RadicadoModal',
+    props: ['modelValue', 'radicado', 'asunto', 'moduloNombre', 'mensaje'],
+    emits: ['update:modelValue', 'close'],
+    template: `
+      <div v-if="modelValue" class="radicado-modal-mock" :data-radicado="radicado">
+        <span>{{ radicado }}</span>
+        <button class="close-modal-mock-btn" @click="$emit('close')">Cerrar</button>
+      </div>
+    `,
+  },
 }
 
 describe('Incident Report Form Page (/tickets/nuevo — FE-06)', () => {
@@ -242,6 +253,14 @@ describe('Incident Report Form Page (/tickets/nuevo — FE-06)', () => {
         color: 'green',
       })
     )
+
+    // Verify modal is open with formatted radicado
+    expect(wrapper.find('.radicado-modal-mock').exists()).toBe(true)
+    expect(wrapper.find('.radicado-modal-mock').text()).toContain('TK-2026-000001')
+
+    // Close modal triggers navigation
+    await wrapper.find('.close-modal-mock-btn').trigger('click')
+    await flushPromises()
 
     expect(mockPush).toHaveBeenCalledWith('/tickets')
   })

@@ -2,6 +2,7 @@
 import { ref, reactive } from 'vue'
 import { useRouter } from 'vue-router'
 import ModuleSelect from '~/components/tickets/ModuleSelect.vue'
+import RadicadoModal from '~/components/tickets/RadicadoModal.vue'
 import { ticketService, type TicketPriority, type CreateTicketPayload } from '~/services/ticketService'
 
 useHead({
@@ -51,6 +52,24 @@ const errors = reactive<Record<string, string>>({
 
 const isSubmitting = ref<boolean>(false)
 const hasNoModules = ref<boolean>(false)
+const isModalOpen = ref<boolean>(false)
+
+const createdTicket = reactive<{
+  radicado: string
+  asunto: string
+  moduloNombre: string
+  mensaje: string
+}>({
+  radicado: '',
+  asunto: '',
+  moduloNombre: '',
+  mensaje: '',
+})
+
+const handleModalClose = async () => {
+  isModalOpen.value = false
+  await router.push('/tickets')
+}
 
 const handleModulesEmpty = (isEmpty: boolean) => {
   hasNoModules.value = isEmpty
@@ -143,15 +162,18 @@ const handleSubmit = async () => {
 
     const response = await ticketService.createTicket(payload)
 
+    createdTicket.radicado = response.radicado
+    createdTicket.asunto = response.asunto || payload.asunto
+    createdTicket.moduloNombre = response.modulo?.nombre || ''
+    createdTicket.mensaje = response.mensaje || 'Incidencia radicada exitosamente. Se ha enviado un comprobante a su correo.'
+    isModalOpen.value = true
+
     toast.add({
       title: '¡Incidencia radicada!',
       description: `Radicado generado exitosamente: ${response.radicado}`,
       color: 'green',
       icon: 'i-heroicons-check-circle',
     })
-
-    // Redirect to tickets list
-    await router.push('/tickets')
   } catch (err: any) {
     toast.add({
       title: 'Error al radicar incidencia',
@@ -333,5 +355,15 @@ const handleSubmit = async () => {
         </div>
       </form>
     </UCard>
+
+    <!-- Confirmation Modal with Radicado & One-Click Copy (FE-07) -->
+    <RadicadoModal
+      v-model="isModalOpen"
+      :radicado="createdTicket.radicado"
+      :asunto="createdTicket.asunto"
+      :modulo-nombre="createdTicket.moduloNombre"
+      :mensaje="createdTicket.mensaje"
+      @close="handleModalClose"
+    />
   </div>
 </template>

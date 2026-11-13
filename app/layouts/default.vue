@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { useAuthStore } from '~/stores/auth'
+import ChatbotWidget from '~/components/chatbot/ChatbotWidget.vue'
 
 const authStore = useAuthStore()
 const router = useRouter()
@@ -77,5 +78,8 @@ const handleLogout = () => {
     <footer class="bg-white border-t border-slate-200 py-4 text-center text-xs text-slate-500">
       Sistema de Gestión de Tickets de Soporte · API-DATAK 2026
     </footer>
+
+    <!-- Floating Chatbot Assistant Widget (FE-10) -->
+    <ChatbotWidget />
   </div>
 </template>

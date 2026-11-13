@@ -42,7 +42,7 @@ export const createApiClient = () => {
 
     try {
       const authStore = useAuthStore()
-      const rawToken = authStore?.accessToken
+      const rawToken = authStore?.accessToken as any
       const token = typeof rawToken === 'object' && rawToken !== null && 'value' in rawToken
         ? rawToken.value
         : rawToken
@@ -67,7 +67,7 @@ export const createApiClient = () => {
     if (status === 401) {
       try {
         const authStore = useAuthStore()
-        const rawRefresh = authStore?.refreshToken
+        const rawRefresh = authStore?.refreshToken as any
         const refreshToken = typeof rawRefresh === 'object' && rawRefresh !== null && 'value' in rawRefresh
           ? rawRefresh.value
           : rawRefresh
@@ -78,10 +78,11 @@ export const createApiClient = () => {
             body: { refresh: refreshToken },
           })
           if (refreshRes?.access) {
-            if (typeof authStore.accessToken === 'object' && authStore.accessToken !== null && 'value' in authStore.accessToken) {
-              authStore.accessToken.value = refreshRes.access
+            const rawAccess = authStore.accessToken as any
+            if (typeof rawAccess === 'object' && rawAccess !== null && 'value' in rawAccess) {
+              rawAccess.value = refreshRes.access
             } else {
-              authStore.accessToken = refreshRes.access
+              authStore.accessToken = refreshRes.access as any
             }
           }
         }

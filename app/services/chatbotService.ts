@@ -1,6 +1,12 @@
 import { apiService } from './api'
 
-export type ChatbotResponseType = 'PREGUNTA' | 'TICKET_CREADO' | 'ESTADO_TICKET' | 'ERROR' | 'INFO'
+export type ChatbotResponseType =
+  | 'PREGUNTA'
+  | 'RESUMEN'
+  | 'TICKET_CREADO'
+  | 'ESTADO_TICKET'
+  | 'ERROR'
+  | 'INFO'
 
 export interface ChatbotMessagePayload {
   session_id: string
@@ -30,6 +36,7 @@ export interface ChatMessage {
   type?: ChatbotResponseType
   radicado?: string
   data?: Record<string, any>
+  campos_recolectados?: Record<string, any>
 }
 
 /**

@@ -7,6 +7,7 @@ import {
 } from '~/services/chatbotService'
 import ChatbotSummaryCard from '~/components/chatbot/ChatbotSummaryCard.vue'
 import ChatbotRadicadoCard from '~/components/chatbot/ChatbotRadicadoCard.vue'
+import ChatbotStatusCard from '~/components/chatbot/ChatbotStatusCard.vue'
 
 interface Props {
   initialOpen?: boolean
@@ -280,6 +281,14 @@ defineExpose({
                 :disabled="isTyping"
                 @confirm="handleSummaryConfirm"
                 @cancel="handleSummaryCancel"
+              />
+
+              <!-- Ticket Status Inquiry Card (FE-12 / RF6) -->
+              <ChatbotStatusCard
+                v-else-if="msg.type === 'ESTADO_TICKET' && msg.radicado"
+                :radicado="msg.radicado"
+                :datos="msg.data"
+                :mensaje="msg.text"
               />
 
               <!-- Optional Status / Radicado Details Card -->

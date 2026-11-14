@@ -5,6 +5,8 @@ import ModuleSelect from '~/components/tickets/ModuleSelect.vue'
 import RadicadoModal from '~/components/tickets/RadicadoModal.vue'
 import { ticketService, type TicketPriority, type CreateTicketPayload } from '~/services/ticketService'
 
+definePageMeta({ middleware: 'auth' })
+
 useHead({
   title: 'Reportar Incidencia — Sistema de Tickets',
 })

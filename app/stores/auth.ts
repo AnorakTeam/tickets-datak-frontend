@@ -15,20 +15,32 @@ export interface UserInfo {
   empresa?: EmpresaInfo | null
 }
 
+const ACCESS_TOKEN_MAX_AGE = 60 * 60 * 2
+const SESSION_MAX_AGE = 60 * 60 * 24 * 7
+
 export const useAuthStore = defineStore('auth', () => {
   const accessToken = useCookie<string | null>('access_token', {
-    maxAge: 60 * 60 * 2, // 2 hours
+    default: () => null,
+    maxAge: ACCESS_TOKEN_MAX_AGE,
+    path: '/',
     sameSite: 'lax',
+    secure: import.meta.env.PROD,
   })
 
   const refreshToken = useCookie<string | null>('refresh_token', {
-    maxAge: 60 * 60 * 24 * 7, // 7 days
+    default: () => null,
+    maxAge: SESSION_MAX_AGE,
+    path: '/',
     sameSite: 'lax',
+    secure: import.meta.env.PROD,
   })
 
   const user = useCookie<UserInfo | null>('auth_user', {
-    maxAge: 60 * 60 * 24 * 7,
+    default: () => null,
+    maxAge: SESSION_MAX_AGE,
+    path: '/',
     sameSite: 'lax',
+    secure: import.meta.env.PROD,
   })
 
   const isAuthenticated = computed(() => !!accessToken.value)

@@ -16,6 +16,7 @@ global.useToast = () => ({
   add: mockAddToast,
 })
 global.useHead = vi.fn()
+global.definePageMeta = vi.fn()
 
 const globalStubs = {
   NuxtLink: {

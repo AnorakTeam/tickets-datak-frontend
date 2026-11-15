@@ -21,6 +21,27 @@ export interface CreateTicketResponse {
   mensaje: string
 }
 
+export interface ClientTicketSummary {
+  radicado: string
+  asunto: string
+  modulo_nombre: string
+  prioridad: TicketPriority
+  estado: TicketStatus
+  fecha_creacion: string
+}
+
+export interface ClientTicketPage {
+  count: number
+  next: string | null
+  previous: string | null
+  results: ClientTicketSummary[]
+}
+
+export interface ListClientTicketsParams {
+  page: number
+  estado?: TicketStatus
+}
+
 /**
  * Creates a new support ticket on behalf of the authenticated client (RF1).
  * Consumes endpoint: POST /api/v1/client/tickets/ via Nitro server proxy.
@@ -29,8 +50,25 @@ export const createTicket = async (payload: CreateTicketPayload): Promise<Create
   return await apiService.post<CreateTicketResponse>('/client/tickets/', payload)
 }
 
+export const listClientTickets = async (
+  params: ListClientTicketsParams,
+): Promise<ClientTicketPage> => {
+  const query: Record<string, string | number> = {
+    page: params.page,
+  }
+
+  if (params.estado) {
+    query.estado = params.estado
+  }
+
+  return await apiService.get<ClientTicketPage>('/client/tickets/', {
+    params: query,
+  })
+}
+
 export const ticketService = {
   createTicket,
+  listClientTickets,
 }
 
 export default ticketService

@@ -265,4 +265,40 @@ describe('ChatbotWidget.vue (FE-10 / RF3, RF6)', () => {
     expect(wrapper.find('[data-testid="chatbot-radicado-number"]').text()).toBe('TK-2026-000777')
     expect(wrapper.find('[data-testid="chatbot-copy-radicado-btn"]').exists()).toBe(true)
   })
+
+  it('renders interactive status inquiry card when client enters a radicado (FE-12)', async () => {
+    const mockStatusResponse: ChatbotMessageResponse = {
+      session_id: 'session-xyz',
+      tipo_respuesta: 'ESTADO_TICKET',
+      radicado: 'TK-2026-000001',
+      datos: {
+        estado: 'En gestion',
+        asunto: 'Error 500 al emitir factura',
+        modulo: 'Facturación Electrónica',
+        fecha_creacion: '2026-11-09T18:30:00Z',
+      },
+      mensaje: 'Tu ticket TK-2026-000001 se encuentra actualmente En gestión.',
+    }
+
+    vi.spyOn(chatbotService, 'sendChatbotMessage').mockResolvedValue(mockStatusResponse)
+
+    const wrapper = mount(ChatbotWidget, {
+      props: { initialOpen: true },
+      global: { stubs: globalStubs },
+    })
+
+    await flushPromises()
+
+    const input = wrapper.find('[data-testid="chatbot-input"]')
+    await input.setValue('TK-2026-000001')
+    await wrapper.find('form').trigger('submit.prevent')
+    await flushPromises()
+
+    expect(wrapper.find('[data-testid="chatbot-status-card"]').exists()).toBe(true)
+    expect(wrapper.find('[data-testid="status-radicado"]').text()).toBe('TK-2026-000001')
+    expect(wrapper.text()).toContain('En Gestión')
+    expect(wrapper.find('[data-testid="status-asunto"]').text()).toBe('Error 500 al emitir factura')
+    expect(wrapper.find('[data-testid="status-modulo"]').text()).toBe('Facturación Electrónica')
+    expect(wrapper.find('[data-testid="view-ticket-detail-link"]').exists()).toBe(true)
+  })
 })

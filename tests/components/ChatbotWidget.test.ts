@@ -3,6 +3,10 @@ import { mount, flushPromises } from '@vue/test-utils'
 import ChatbotWidget from '~/components/chatbot/ChatbotWidget.vue'
 import { chatbotService, type ChatbotMessageResponse } from '~/services/chatbotService'
 
+global.useToast = () => ({
+  add: vi.fn(),
+})
+
 const globalStubs = {
   UIcon: {
     props: ['name'],
@@ -14,6 +18,14 @@ const globalStubs = {
   },
   Transition: {
     template: '<div><slot /></div>',
+  },
+  NuxtLink: {
+    props: ['to'],
+    template: '<a :href="to"><slot /></a>',
+  },
+  UButton: {
+    props: ['size', 'color', 'variant', 'icon', 'disabled'],
+    template: '<button :disabled="disabled"><slot /></button>',
   },
 }
 
@@ -173,5 +185,84 @@ describe('ChatbotWidget.vue (FE-10 / RF3, RF6)', () => {
     const botMessages = wrapper.findAll('[data-testid="message-bot"]')
     expect(botMessages.length).toBe(1)
     expect(wrapper.findAll('[data-testid="message-user"]').length).toBe(0)
+  })
+
+  it('renders interactive summary card and handles confirmation (FE-11)', async () => {
+    const mockSummaryResponse: ChatbotMessageResponse = {
+      session_id: 'session-xyz',
+      tipo_respuesta: 'RESUMEN',
+      mensaje: 'Por favor revisa el resumen de tu reporte antes de crearlo:',
+      campos_recolectados: {
+        modulo_nombre: 'Facturación Electrónica',
+        pantalla: 'Factura F-203',
+        asunto: 'Error 500 al emitir factura',
+        descripcion: 'El sistema no timbra y lanza error de servidor.',
+      },
+    }
+
+    vi.spyOn(chatbotService, 'sendChatbotMessage').mockResolvedValue(mockSummaryResponse)
+
+    const wrapper = mount(ChatbotWidget, {
+      props: { initialOpen: true },
+      global: { stubs: globalStubs },
+    })
+
+    await flushPromises()
+
+    const input = wrapper.find('[data-testid="chatbot-input"]')
+    await input.setValue('Ya terminé de explicar el error')
+    await wrapper.find('form').trigger('submit.prevent')
+    await flushPromises()
+
+    expect(wrapper.find('[data-testid="chatbot-summary-card"]').exists()).toBe(true)
+    expect(wrapper.text()).toContain('Resumen de la Incidencia a Radicar')
+    expect(wrapper.text()).toContain('Facturación Electrónica')
+
+    // Click confirmation button in summary card
+    const confirmBtn = wrapper.find('[data-testid="summary-confirm-btn"]')
+    expect(confirmBtn.exists()).toBe(true)
+
+    vi.spyOn(chatbotService, 'sendChatbotMessage').mockResolvedValue({
+      session_id: 'session-xyz',
+      tipo_respuesta: 'TICKET_CREADO',
+      radicado: 'TK-2026-000105',
+      mensaje: 'Ticket creado exitosamente.',
+    })
+
+    await confirmBtn.trigger('click')
+    await flushPromises()
+
+    expect(chatbotService.sendChatbotMessage).toHaveBeenCalledWith(
+      expect.objectContaining({
+        mensaje: 'Sí, confirmar y radicar ticket',
+      })
+    )
+  })
+
+  it('renders radicado confirmation card with one-click copy button on ticket creation (FE-11)', async () => {
+    const mockCreatedResponse: ChatbotMessageResponse = {
+      session_id: 'session-xyz',
+      tipo_respuesta: 'TICKET_CREADO',
+      radicado: 'TK-2026-000777',
+      mensaje: 'He creado tu ticket con el radicado TK-2026-000777.',
+    }
+
+    vi.spyOn(chatbotService, 'sendChatbotMessage').mockResolvedValue(mockCreatedResponse)
+
+    const wrapper = mount(ChatbotWidget, {
+      props: { initialOpen: true },
+      global: { stubs: globalStubs },
+    })
+
+    await flushPromises()
+
+    const input = wrapper.find('[data-testid="chatbot-input"]')
+    await input.setValue('Confirmar')
+    await wrapper.find('form').trigger('submit.prevent')
+    await flushPromises()
+
+    expect(wrapper.find('[data-testid="chatbot-radicado-card"]').exists()).toBe(true)
+    expect(wrapper.find('[data-testid="chatbot-radicado-number"]').text()).toBe('TK-2026-000777')
+    expect(wrapper.find('[data-testid="chatbot-copy-radicado-btn"]').exists()).toBe(true)
   })
 })

@@ -5,6 +5,8 @@ import {
   type ChatMessage,
   type ChatbotMessageResponse,
 } from '~/services/chatbotService'
+import ChatbotSummaryCard from '~/components/chatbot/ChatbotSummaryCard.vue'
+import ChatbotRadicadoCard from '~/components/chatbot/ChatbotRadicadoCard.vue'
 
 interface Props {
   initialOpen?: boolean
@@ -96,6 +98,7 @@ const sendMessageText = async (textToSend: string) => {
       type: res.tipo_respuesta,
       radicado: res.radicado,
       data: res.datos,
+      campos_recolectados: res.campos_recolectados,
     }
     messages.value.push(botMsg)
 
@@ -115,6 +118,14 @@ const sendMessageText = async (textToSend: string) => {
     isTyping.value = false
     scrollToBottom()
   }
+}
+
+const handleSummaryConfirm = () => {
+  sendMessageText('Sí, confirmar y radicar ticket')
+}
+
+const handleSummaryCancel = () => {
+  sendMessageText('Deseo corregir la información ingresada')
 }
 
 const handleSend = () => {
@@ -255,9 +266,25 @@ defineExpose({
                 {{ msg.text }}
               </p>
 
+              <!-- Radicado Confirmation Card (FE-11 / RF1, AGENTS.md Rule 4) -->
+              <ChatbotRadicadoCard
+                v-if="msg.type === 'TICKET_CREADO' && msg.radicado"
+                :radicado="msg.radicado"
+                :mensaje="msg.text"
+              />
+
+              <!-- Interactive Incident Summary Card (FE-11) -->
+              <ChatbotSummaryCard
+                v-else-if="msg.type === 'RESUMEN' || (msg.campos_recolectados && Object.keys(msg.campos_recolectados).length >= 2)"
+                :campos="msg.campos_recolectados"
+                :disabled="isTyping"
+                @confirm="handleSummaryConfirm"
+                @cancel="handleSummaryCancel"
+              />
+
               <!-- Optional Status / Radicado Details Card -->
               <div
-                v-if="msg.radicado"
+                v-else-if="msg.radicado"
                 class="mt-2.5 pt-2 border-t border-slate-100 flex items-center justify-between gap-2"
               >
                 <div class="text-xs">

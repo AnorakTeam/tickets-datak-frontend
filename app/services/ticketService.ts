@@ -42,6 +42,26 @@ export interface ListClientTicketsParams {
   estado?: TicketStatus
 }
 
+export interface ClientTicketDetail {
+  radicado: string
+  estado: TicketStatus
+  prioridad: TicketPriority
+  asunto: string
+  descripcion: string
+  pestana_o_documento: string
+  mensaje_error?: string
+  canal_origen: string
+  fecha_creacion: string
+  fecha_resolucion?: string | null
+  modulo?: {
+    id: number
+    nombre: string
+  }
+  modulo_nombre?: string
+  comentario_solucion?: string
+  motivo_no_procedente?: string
+}
+
 /**
  * Creates a new support ticket on behalf of the authenticated client (RF1).
  * Consumes endpoint: POST /api/v1/client/tickets/ via Nitro server proxy.
@@ -66,9 +86,16 @@ export const listClientTickets = async (
   })
 }
 
+export const getClientTicket = async (radicado: string): Promise<ClientTicketDetail> => {
+  return await apiService.get<ClientTicketDetail>(
+    `/client/tickets/${encodeURIComponent(radicado)}/`,
+  )
+}
+
 export const ticketService = {
   createTicket,
   listClientTickets,
+  getClientTicket,
 }
 
 export default ticketService

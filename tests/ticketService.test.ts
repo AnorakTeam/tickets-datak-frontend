@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { apiService } from '~/services/api'
-import { listClientTickets } from '~/services/ticketService'
+import { getClientTicket, listClientTickets } from '~/services/ticketService'
 
 vi.mock('~/services/api', () => ({
   apiService: {
@@ -42,5 +42,31 @@ describe('ticketService.listClientTickets', () => {
     expect(apiService.get).toHaveBeenCalledWith('/client/tickets/', {
       params: { page: 1, estado: 'En gestion' },
     })
+  })
+})
+
+describe('ticketService.getClientTicket', () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+  })
+
+  it('requests the client-safe detail endpoint using the radicado', async () => {
+    vi.mocked(apiService.get).mockResolvedValue({
+      radicado: 'TK-2026-000042',
+    })
+
+    await getClientTicket('TK-2026-000042')
+
+    expect(apiService.get).toHaveBeenCalledWith('/client/tickets/TK-2026-000042/')
+  })
+
+  it('encodes the radicado before adding it to the request path', async () => {
+    vi.mocked(apiService.get).mockResolvedValue({
+      radicado: 'TK-2026-000042',
+    })
+
+    await getClientTicket('TK-2026/000042')
+
+    expect(apiService.get).toHaveBeenCalledWith('/client/tickets/TK-2026%2F000042/')
   })
 })

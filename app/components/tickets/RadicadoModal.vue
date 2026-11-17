@@ -24,6 +24,7 @@ const props = withDefaults(defineProps<Props>(), {
 const emit = defineEmits<{
   (e: 'update:modelValue', value: boolean): void
   (e: 'close'): void
+  (e: 'redirect', path: string): void
   (e: 'copied', radicado: string): void
 }>()
 
@@ -34,10 +35,20 @@ const isCopied = ref<boolean>(false)
 const handleCopy = async () => {
   if (!props.radicado) return
 
+  const hasClipboardApi = typeof navigator !== 'undefined' && Boolean(navigator?.clipboard?.writeText)
+
+  if (!hasClipboardApi) {
+    toast.add({
+      title: 'Portapapeles no disponible',
+      description: 'Su navegador o entorno actual no soporta copiado automático. Por favor seleccione y copie el radicado manualmente.',
+      color: 'amber',
+      icon: 'i-heroicons-exclamation-triangle',
+    })
+    return
+  }
+
   try {
-    if (typeof navigator !== 'undefined' && navigator.clipboard?.writeText) {
-      await navigator.clipboard.writeText(props.radicado)
-    }
+    await navigator.clipboard.writeText(props.radicado)
     isCopied.value = true
     emit('copied', props.radicado)
 
@@ -61,17 +72,27 @@ const handleCopy = async () => {
   }
 }
 
-const handleRedirect = async () => {
-  emit('update:modelValue', false)
-  emit('close')
-  if (props.redirectPath) {
-    await router.push(props.redirectPath)
-  }
-}
-
+// Unified close handler for "Cerrar" button, backdrop click, and Escape key
 const handleClose = () => {
   emit('update:modelValue', false)
   emit('close')
+}
+
+const onModalVisibilityChange = (visible: boolean) => {
+  if (!visible) {
+    handleClose()
+  } else {
+    emit('update:modelValue', true)
+  }
+}
+
+// Single responsibility for navigation: only this handler triggers navigation to redirectPath
+const handleRedirect = async () => {
+  emit('update:modelValue', false)
+  emit('redirect', props.redirectPath)
+  if (props.redirectPath) {
+    await router.push(props.redirectPath)
+  }
 }
 </script>
 
@@ -80,7 +101,7 @@ const handleClose = () => {
     :model-value="modelValue"
     :prevent-close="preventClose"
     data-testid="radicado-modal"
-    @update:model-value="emit('update:modelValue', $event)"
+    @update:model-value="onModalVisibilityChange"
   >
     <UCard :ui="{ ring: '', divide: 'divide-y divide-slate-100' }" class="p-2 sm:p-4">
       <template #header>

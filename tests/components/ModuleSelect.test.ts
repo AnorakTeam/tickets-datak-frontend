@@ -58,7 +58,6 @@ describe('ModuleSelect.vue (FE-05 / Issue #18)', () => {
   })
 
   it('renders loading state initially while fetching modules', async () => {
-    // Delay resolution to capture loading state
     let resolvePromise: (val: ContractedModule[]) => void
     const pendingPromise = new Promise<ContractedModule[]>((resolve) => {
       resolvePromise = resolve
@@ -74,7 +73,6 @@ describe('ModuleSelect.vue (FE-05 / Issue #18)', () => {
     expect(wrapper.text()).toContain('Cargando módulos contratados...')
     expect(wrapper.find('[data-testid="skeleton"]').exists()).toBe(true)
 
-    // Finish resolving
     resolvePromise!(mockModules)
     await flushPromises()
 
@@ -99,8 +97,8 @@ describe('ModuleSelect.vue (FE-05 / Issue #18)', () => {
     expect(wrapper.emitted('loaded')![0][0]).toEqual(mockModules)
     expect(wrapper.emitted('empty')).toBeTruthy()
     expect(wrapper.emitted('empty')![0][0]).toBe(false)
+    expect(wrapper.emitted('error')![0][0]).toBeNull()
 
-    // Check options rendered
     const text = wrapper.text()
     expect(text).toContain('Facturación Electrónica')
     expect(text).toContain('Control de Inventarios')
@@ -124,7 +122,7 @@ describe('ModuleSelect.vue (FE-05 / Issue #18)', () => {
     expect(wrapper.find('[data-testid="module-select-ready"]').exists()).toBe(false)
   })
 
-  it('displays error state and allows retrying when API fails', async () => {
+  it('displays error state, emits error event, does NOT emit empty: true when network fails, and allows retry', async () => {
     vi.spyOn(moduleService, 'getContractedModules')
       .mockRejectedValueOnce(new Error('Network proxy error'))
       .mockResolvedValueOnce(mockModules)
@@ -135,9 +133,18 @@ describe('ModuleSelect.vue (FE-05 / Issue #18)', () => {
 
     await flushPromises()
 
+    // Error state is displayed
     expect(wrapper.find('[data-testid="module-select-error"]').exists()).toBe(true)
     expect(wrapper.text()).toContain('Error al cargar módulos')
     expect(wrapper.text()).toContain('Network proxy error')
+
+    // Must NOT show empty company banner
+    expect(wrapper.find('[data-testid="module-select-empty"]').exists()).toBe(false)
+
+    // Emitted events verification
+    expect(wrapper.emitted('error')).toBeTruthy()
+    expect(wrapper.emitted('error')![0][0]).toBe('Network proxy error')
+    expect(wrapper.emitted('empty')![0][0]).toBe(false)
 
     // Click retry button
     const retryBtn = wrapper.find('button')
@@ -148,6 +155,8 @@ describe('ModuleSelect.vue (FE-05 / Issue #18)', () => {
     expect(wrapper.find('[data-testid="module-select-error"]').exists()).toBe(false)
     expect(wrapper.find('[data-testid="module-select-ready"]').exists()).toBe(true)
     expect(wrapper.text()).toContain('Facturación Electrónica')
+    expect(wrapper.emitted('empty')![1][0]).toBe(false)
+    expect(wrapper.emitted('error')![1][0]).toBeNull()
   })
 
   it('emits update:modelValue and change when an option is selected', async () => {

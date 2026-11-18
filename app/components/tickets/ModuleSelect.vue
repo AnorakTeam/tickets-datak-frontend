@@ -29,6 +29,7 @@ const emit = defineEmits<{
   (e: 'change', module: ContractedModule | null): void
   (e: 'loaded', modules: ContractedModule[]): void
   (e: 'empty', isEmpty: boolean): void
+  (e: 'error', error: string | null): void
 }>()
 
 const modules = ref<ContractedModule[]>([])
@@ -56,11 +57,15 @@ const fetchModules = async () => {
     const data = await moduleService.getContractedModules()
     modules.value = Array.isArray(data) ? data : []
     emit('loaded', modules.value)
+    emit('error', null)
     emit('empty', modules.value.length === 0)
-  } catch (err: any) {
-    fetchError.value = err?.message || 'Error al cargar los módulos contratados. Por favor intente nuevamente.'
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : 'Error al cargar los módulos contratados. Por favor intente nuevamente.'
+    fetchError.value = message
     modules.value = []
-    emit('empty', true)
+    // Do NOT emit empty: true when load fails due to network or connection error!
+    emit('empty', false)
+    emit('error', message)
   } finally {
     isLoading.value = false
   }
@@ -97,7 +102,7 @@ defineExpose({
       <USkeleton class="h-10 w-full rounded-lg" />
     </div>
 
-    <!-- Error State -->
+    <!-- Error State (Network or server connection failure) -->
     <div v-else-if="fetchError" class="space-y-2" data-testid="module-select-error">
       <UAlert
         color="red"
@@ -113,11 +118,11 @@ defineExpose({
         icon="i-heroicons-arrow-path"
         @click="fetchModules"
       >
-        Reintentar
+        Reintentar carga
       </UButton>
     </div>
 
-    <!-- Empty State (No contracted modules) -->
+    <!-- Empty State (Successful load, but company has no modules contracted) -->
     <div v-else-if="isEmpty" class="space-y-2" data-testid="module-select-empty">
       <UAlert
         color="amber"

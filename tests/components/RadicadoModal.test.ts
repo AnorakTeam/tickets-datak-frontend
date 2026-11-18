@@ -16,6 +16,7 @@ global.useToast = () => ({
 
 const globalStubs = {
   UModal: {
+    name: 'UModal',
     props: ['modelValue', 'preventClose'],
     emits: ['update:modelValue'],
     template: `
@@ -43,7 +44,7 @@ describe('RadicadoModal.vue (FE-07 / AGENTS.md Rule 4)', () => {
     mockPush.mockReset()
     mockAddToast.mockReset()
 
-    // Mock clipboard
+    // Default mock clipboard available
     Object.defineProperty(navigator, 'clipboard', {
       value: {
         writeText: vi.fn().mockResolvedValue(undefined),
@@ -72,7 +73,7 @@ describe('RadicadoModal.vue (FE-07 / AGENTS.md Rule 4)', () => {
     expect(wrapper.find('[data-testid="copy-radicado-btn"]').exists()).toBe(true)
   })
 
-  it('copies radicado to clipboard on click and shows feedback', async () => {
+  it('copies radicado to clipboard on click and shows feedback when Clipboard API is available', async () => {
     const wrapper = mount(RadicadoModal, {
       props: {
         modelValue: true,
@@ -97,7 +98,72 @@ describe('RadicadoModal.vue (FE-07 / AGENTS.md Rule 4)', () => {
     )
   })
 
-  it('navigates to tickets dashboard when clicking redirect button', async () => {
+  it('handles unavailable Clipboard API gracefully without indicating copied', async () => {
+    // Simulate clipboard API missing
+    Object.defineProperty(navigator, 'clipboard', {
+      value: undefined,
+      writable: true,
+      configurable: true,
+    })
+
+    const wrapper = mount(RadicadoModal, {
+      props: {
+        modelValue: true,
+        radicado: 'TK-2026-000042',
+      },
+      global: { stubs: globalStubs },
+    })
+
+    const copyBtn = wrapper.find('[data-testid="copy-radicado-btn"]')
+    await copyBtn.trigger('click')
+    await flushPromises()
+
+    // Must NOT emit copied event and button text must NOT say '¡Copiado!'
+    expect(wrapper.emitted('copied')).toBeFalsy()
+    expect(copyBtn.text()).not.toContain('¡Copiado!')
+    expect(copyBtn.text()).toContain('Copiar Radicado')
+
+    // Warning toast must be displayed
+    expect(mockAddToast).toHaveBeenCalledWith(
+      expect.objectContaining({
+        title: 'Portapapeles no disponible',
+        color: 'amber',
+      })
+    )
+  })
+
+  it('handles clipboard writeText rejection gracefully without indicating copied', async () => {
+    Object.defineProperty(navigator, 'clipboard', {
+      value: {
+        writeText: vi.fn().mockRejectedValue(new Error('Permission denied')),
+      },
+      writable: true,
+      configurable: true,
+    })
+
+    const wrapper = mount(RadicadoModal, {
+      props: {
+        modelValue: true,
+        radicado: 'TK-2026-000042',
+      },
+      global: { stubs: globalStubs },
+    })
+
+    const copyBtn = wrapper.find('[data-testid="copy-radicado-btn"]')
+    await copyBtn.trigger('click')
+    await flushPromises()
+
+    expect(wrapper.emitted('copied')).toBeFalsy()
+    expect(copyBtn.text()).not.toContain('¡Copiado!')
+    expect(mockAddToast).toHaveBeenCalledWith(
+      expect.objectContaining({
+        title: 'Error al copiar',
+        color: 'amber',
+      })
+    )
+  })
+
+  it('navigates to tickets dashboard as single authority and emits redirect without duplicate close', async () => {
     const wrapper = mount(RadicadoModal, {
       props: {
         modelValue: true,
@@ -111,7 +177,9 @@ describe('RadicadoModal.vue (FE-07 / AGENTS.md Rule 4)', () => {
     await redirectBtn.trigger('click')
     await flushPromises()
 
-    expect(wrapper.emitted('close')).toBeTruthy()
+    expect(wrapper.emitted('redirect')).toBeTruthy()
+    expect(wrapper.emitted('redirect')![0]).toEqual(['/tickets'])
+    expect(wrapper.emitted('close')).toBeFalsy() // Prevents duplicate navigation in parent
     expect(mockPush).toHaveBeenCalledWith('/tickets')
   })
 
@@ -130,5 +198,23 @@ describe('RadicadoModal.vue (FE-07 / AGENTS.md Rule 4)', () => {
 
     expect(wrapper.emitted('close')).toBeTruthy()
     expect(wrapper.emitted('update:modelValue')![0]).toEqual([false])
+  })
+
+  it('follows the exact same close flow when closed via backdrop or Escape key', async () => {
+    const wrapper = mount(RadicadoModal, {
+      props: {
+        modelValue: true,
+        radicado: 'TK-2026-000042',
+      },
+      global: { stubs: globalStubs },
+    })
+
+    const uModal = wrapper.findComponent({ name: 'UModal' })
+    // Simulate UModal emitting update:modelValue: false (backdrop or Escape)
+    uModal.vm.$emit('update:modelValue', false)
+    await flushPromises()
+
+    expect(wrapper.emitted('close')).toBeTruthy()
+    expect(wrapper.emitted('update:modelValue')).toBeTruthy()
   })
 })

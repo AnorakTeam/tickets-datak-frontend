@@ -1,11 +1,13 @@
 <script setup lang="ts">
-import { ref, reactive } from 'vue'
+import { ref, reactive, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import ModuleSelect from '~/components/tickets/ModuleSelect.vue'
 import RadicadoModal from '~/components/tickets/RadicadoModal.vue'
 import { ticketService, type TicketPriority, type CreateTicketPayload } from '~/services/ticketService'
 
-definePageMeta({ middleware: 'auth' })
+definePageMeta({
+  middleware: 'auth',
+})
 
 useHead({
   title: 'Reportar Incidencia — Sistema de Tickets',
@@ -54,6 +56,7 @@ const errors = reactive<Record<string, string>>({
 
 const isSubmitting = ref<boolean>(false)
 const hasNoModules = ref<boolean>(false)
+const moduleLoadError = ref<string | null>(null)
 const isModalOpen = ref<boolean>(false)
 
 const createdTicket = reactive<{
@@ -68,16 +71,13 @@ const createdTicket = reactive<{
   mensaje: '',
 })
 
-const handleModalClose = async () => {
-  isModalOpen.value = false
-  await router.push('/tickets')
-}
-
-const handleModulesEmpty = (isEmpty: boolean) => {
-  hasNoModules.value = isEmpty
-}
-
-const clearErrors = () => {
+const resetForm = () => {
+  form.modulo_id = null
+  form.pestana_o_documento = ''
+  form.asunto = ''
+  form.descripcion = ''
+  form.mensaje_error = ''
+  form.prioridad = 'Media'
   errors.modulo_id = ''
   errors.pestana_o_documento = ''
   errors.asunto = ''
@@ -85,48 +85,130 @@ const clearErrors = () => {
   errors.prioridad = ''
 }
 
-const validate = (): boolean => {
-  clearErrors()
-  let isValid = true
+const handleModalClose = async () => {
+  isModalOpen.value = false
+  await router.push('/tickets')
+}
 
+// Separate state handlers for ModuleSelect
+const handleModulesEmpty = (isEmpty: boolean) => {
+  hasNoModules.value = isEmpty
+  if (isEmpty) {
+    moduleLoadError.value = null
+  }
+}
+
+const handleModulesError = (error: string | null) => {
+  moduleLoadError.value = error
+  if (error) {
+    hasNoModules.value = false
+  }
+}
+
+const handleModulesLoaded = () => {
+  moduleLoadError.value = null
+}
+
+// Field-specific validation functions (real-time validation)
+const validateModulo = (showError = false): boolean => {
   if (!form.modulo_id) {
-    errors.modulo_id = 'Debe seleccionar el módulo de software afectado.'
-    isValid = false
+    if (showError) errors.modulo_id = 'Debe seleccionar el módulo de software afectado.'
+    return false
   }
+  errors.modulo_id = ''
+  return true
+}
 
-  const trimmedScreen = form.pestana_o_documento.trim()
-  if (!trimmedScreen) {
-    errors.pestana_o_documento = 'Indique la pantalla, vista o documento donde ocurrió el incidente.'
-    isValid = false
-  } else if (trimmedScreen.length > 255) {
-    errors.pestana_o_documento = 'El nombre de pantalla no debe superar los 255 caracteres.'
-    isValid = false
-  }
-
-  const trimmedSubject = form.asunto.trim()
-  if (!trimmedSubject) {
-    errors.asunto = 'El asunto o título del incidente es obligatorio.'
-    isValid = false
-  } else if (trimmedSubject.length > 255) {
-    errors.asunto = 'El asunto no debe superar los 255 caracteres.'
-    isValid = false
-  }
-
-  const trimmedDesc = form.descripcion.trim()
-  if (!trimmedDesc) {
-    errors.descripcion = 'La descripción detallada del problema es obligatoria.'
-    isValid = false
-  } else if (trimmedDesc.length < 15) {
-    errors.descripcion = 'Por favor proporcione una descripción más detallada (mínimo 15 caracteres).'
-    isValid = false
-  }
-
+const validatePrioridad = (showError = false): boolean => {
   if (!form.prioridad) {
-    errors.prioridad = 'Seleccione la prioridad estimada del incidente.'
-    isValid = false
+    if (showError) errors.prioridad = 'Seleccione la prioridad estimada del incidente.'
+    return false
   }
+  errors.prioridad = ''
+  return true
+}
 
-  return isValid
+const validatePestana = (showError = false): boolean => {
+  const trimmed = form.pestana_o_documento.trim()
+  if (!trimmed) {
+    if (showError) errors.pestana_o_documento = 'Indique la pantalla, vista o documento donde ocurrió el incidente.'
+    return false
+  }
+  if (trimmed.length > 255) {
+    errors.pestana_o_documento = 'El nombre de pantalla no debe superar los 255 caracteres.'
+    return false
+  }
+  errors.pestana_o_documento = ''
+  return true
+}
+
+const validateAsunto = (showError = false): boolean => {
+  const trimmed = form.asunto.trim()
+  if (!trimmed) {
+    if (showError) errors.asunto = 'El asunto o título del incidente es obligatorio.'
+    return false
+  }
+  if (trimmed.length > 255) {
+    errors.asunto = 'El asunto no debe superar los 255 caracteres.'
+    return false
+  }
+  errors.asunto = ''
+  return true
+}
+
+const validateDescripcion = (showError = false): boolean => {
+  const trimmed = form.descripcion.trim()
+  if (!trimmed) {
+    if (showError) errors.descripcion = 'La descripción detallada del problema es obligatoria.'
+    return false
+  }
+  if (trimmed.length < 15) {
+    if (showError) errors.descripcion = 'Por favor proporcione una descripción más detallada (mínimo 15 caracteres).'
+    return false
+  }
+  errors.descripcion = ''
+  return true
+}
+
+// Immediate error clearing / real-time revalidation when user edits fields
+watch(() => form.modulo_id, (val) => {
+  if (val) {
+    errors.modulo_id = ''
+  }
+})
+
+watch(() => form.prioridad, (val) => {
+  if (val) {
+    errors.prioridad = ''
+  }
+})
+
+watch(() => form.pestana_o_documento, () => {
+  if (errors.pestana_o_documento) {
+    validatePestana(true)
+  }
+})
+
+watch(() => form.asunto, () => {
+  if (errors.asunto) {
+    validateAsunto(true)
+  }
+})
+
+watch(() => form.descripcion, () => {
+  if (errors.descripcion) {
+    validateDescripcion(true)
+  }
+})
+
+const validate = (): boolean => {
+  const isModValid = validateModulo(true)
+  const isPrioValid = validatePrioridad(true)
+  const isPestValid = validatePestana(true)
+  const isAsuValid = validateAsunto(true)
+  const isDescValid = validateDescripcion(true)
+
+  return isModValid && isPrioValid && isPestValid && isAsuValid && isDescValid
 }
 
 const handleSubmit = async () => {
@@ -176,10 +258,11 @@ const handleSubmit = async () => {
       color: 'green',
       icon: 'i-heroicons-check-circle',
     })
-  } catch (err: any) {
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : 'No fue posible registrar la incidencia en el servidor. Intente nuevamente.'
     toast.add({
       title: 'Error al radicar incidencia',
-      description: err?.message || 'No fue posible registrar la incidencia en el servidor. Intente nuevamente.',
+      description: message,
       color: 'red',
       icon: 'i-heroicons-x-circle',
     })
@@ -228,6 +311,8 @@ const handleSubmit = async () => {
             :error="errors.modulo_id"
             :disabled="isSubmitting"
             @empty="handleModulesEmpty"
+            @error="handleModulesError"
+            @loaded="handleModulesLoaded"
           />
 
           <!-- Priority Dropdown -->
@@ -257,6 +342,16 @@ const handleSubmit = async () => {
           </UFormGroup>
         </div>
 
+        <!-- Connection Error Banner if Module Fetch Failed -->
+        <UAlert
+          v-if="moduleLoadError"
+          color="red"
+          variant="soft"
+          icon="i-heroicons-exclamation-circle"
+          title="Fallo de conexión con el catálogo de módulos"
+          :description="`No se pudieron cargar los módulos contratados (${moduleLoadError}). Puede reintentar desde el botón del selector o verificar su conexión.`"
+        />
+
         <!-- Screen / Document / Tab Input -->
         <UFormGroup
           label="Pantalla, ventana o documento afectado"
@@ -271,6 +366,7 @@ const handleSubmit = async () => {
             size="md"
             icon="i-heroicons-window"
             :disabled="isSubmitting"
+            @blur="validatePestana(true)"
           />
         </UFormGroup>
 
@@ -288,6 +384,7 @@ const handleSubmit = async () => {
             size="md"
             icon="i-heroicons-pencil-square"
             :disabled="isSubmitting"
+            @blur="validateAsunto(true)"
           />
         </UFormGroup>
 
@@ -303,6 +400,7 @@ const handleSubmit = async () => {
             placeholder="Describa paso a paso cómo se presentó el problema..."
             :rows="5"
             :disabled="isSubmitting"
+            @blur="validateDescripcion(true)"
           />
         </UFormGroup>
 
@@ -320,7 +418,7 @@ const handleSubmit = async () => {
           />
         </UFormGroup>
 
-        <!-- Warning Alert if Company has no modules -->
+        <!-- Warning Alert ONLY if Company genuinely has no modules -->
         <UAlert
           v-if="hasNoModules"
           color="amber"

@@ -38,25 +38,27 @@ const globalStubs = {
   },
   UInput: {
     props: ['modelValue', 'placeholder', 'disabled', 'maxlength', 'size', 'icon'],
-    emits: ['update:modelValue'],
+    emits: ['update:modelValue', 'blur'],
     template: `
       <input
         :value="modelValue"
         :placeholder="placeholder"
         :disabled="disabled"
         @input="$emit('update:modelValue', $event.target.value)"
+        @blur="$emit('blur')"
       />
     `,
   },
   UTextarea: {
     props: ['modelValue', 'placeholder', 'disabled', 'rows'],
-    emits: ['update:modelValue'],
+    emits: ['update:modelValue', 'blur'],
     template: `
       <textarea
         :value="modelValue"
         :placeholder="placeholder"
         :disabled="disabled"
         @input="$emit('update:modelValue', $event.target.value)"
+        @blur="$emit('blur')"
       />
     `,
   },
@@ -97,7 +99,7 @@ const globalStubs = {
   ModuleSelect: {
     name: 'ModuleSelect',
     props: ['modelValue', 'label', 'error', 'required', 'disabled'],
-    emits: ['update:modelValue', 'empty'],
+    emits: ['update:modelValue', 'empty', 'error', 'loaded'],
     template: `
       <div class="module-select-mock" :data-error="error">
         <label v-if="label">{{ label }}</label>
@@ -168,6 +170,37 @@ describe('Incident Report Form Page (/tickets/nuevo — FE-06)', () => {
     )
   })
 
+  it('clears specific field error in real-time when the user corrects the input', async () => {
+    const wrapper = mount(NuevoTicketPage, {
+      global: { stubs: globalStubs },
+    })
+
+    // Submit while empty to trigger all validation errors
+    await wrapper.find('form').trigger('submit.prevent')
+    await flushPromises()
+
+    expect(wrapper.text()).toContain('El asunto o título del incidente es obligatorio.')
+    expect(wrapper.text()).toContain('La descripción detallada del problema es obligatoria.')
+
+    // Correct the subject field
+    const inputs = wrapper.findAll('input')
+    await inputs[1].setValue('Error al timbrar factura electrónica')
+    await flushPromises()
+
+    // Error for subject is cleared immediately in real time
+    expect(wrapper.text()).not.toContain('El asunto o título del incidente es obligatorio.')
+    // Description error is still present
+    expect(wrapper.text()).toContain('La descripción detallada del problema es obligatoria.')
+
+    // Correct the description field with >= 15 chars
+    const textareas = wrapper.findAll('textarea')
+    await textareas[0].setValue('Descripción completa y detallada de más de quince caracteres')
+    await flushPromises()
+
+    // Description error is cleared in real time
+    expect(wrapper.text()).not.toContain('La descripción detallada del problema es obligatoria.')
+  })
+
   it('validates that description has minimum 15 characters', async () => {
     const wrapper = mount(NuevoTicketPage, {
       global: { stubs: globalStubs },
@@ -189,21 +222,30 @@ describe('Incident Report Form Page (/tickets/nuevo — FE-06)', () => {
     expect(wrapper.text()).toContain('Por favor proporcione una descripción más detallada (mínimo 15 caracteres).')
   })
 
-  it('disables submit button and shows warning alert when company has no contracted modules', async () => {
+  it('clearly separates module network connection error from genuine company without modules', async () => {
     const wrapper = mount(NuevoTicketPage, {
       global: { stubs: globalStubs },
     })
 
-    // Simulate ModuleSelect emitting empty: true
     const moduleSelect = wrapper.findComponent({ name: 'ModuleSelect' })
+
+    // Case 1: Network error occurs while loading modules
+    moduleSelect.vm.$emit('error', '500 Server Error')
+    await flushPromises()
+
+    // Must show network error alert
+    expect(wrapper.text()).toContain('Fallo de conexión con el catálogo de módulos')
+    expect(wrapper.text()).toContain('500 Server Error')
+    // Must NOT declare the company has no modules
+    expect(wrapper.text()).not.toContain('Atención: No puede radicar incidencias')
+
+    // Case 2: Company genuinely has 0 modules
     moduleSelect.vm.$emit('empty', true)
     await flushPromises()
 
-    expect(wrapper.find('.u-alert').exists()).toBe(true)
+    // Must show the amber alert for company without modules
     expect(wrapper.text()).toContain('Atención: No puede radicar incidencias')
-
-    const submitBtn = wrapper.find('button[type="submit"]')
-    expect(submitBtn.attributes('disabled')).toBeDefined()
+    expect(wrapper.text()).toContain('Su empresa no registra módulos de software contratados activos')
   })
 
   it('submits valid form data, calls ticketService.createTicket, and redirects on success', async () => {

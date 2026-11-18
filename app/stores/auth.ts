@@ -46,6 +46,11 @@ export const useAuthStore = defineStore('auth', () => {
   const isAuthenticated = computed(() => !!accessToken.value)
   const empresa = computed(() => user.value?.empresa || null)
   const userRole = computed(() => user.value?.rol || null)
+  const isSupportStaff = computed(() => {
+    const role = userRole.value
+    return role === 'agente_soporte' || role === 'responsable_atencion'
+  })
+  const isClient = computed(() => userRole.value === 'cliente')
 
   const setSession = (access: string, refresh: string, userData: UserInfo) => {
     accessToken.value = access
@@ -62,7 +67,11 @@ export const useAuthStore = defineStore('auth', () => {
   const login = async (email: string, password: string) => {
     const session = await authService.login({ correo: email, password })
     setSession(session.access, session.refresh, session.user)
-    await navigateTo('/tickets')
+    if (session.user.rol === 'agente_soporte' || session.user.rol === 'responsable_atencion') {
+      await navigateTo('/support/tickets')
+    } else {
+      await navigateTo('/tickets')
+    }
   }
 
   const logout = async () => {
@@ -77,6 +86,8 @@ export const useAuthStore = defineStore('auth', () => {
     isAuthenticated,
     empresa,
     userRole,
+    isSupportStaff,
+    isClient,
     setSession,
     clear,
     login,

@@ -44,6 +44,10 @@ const stubs = {
     props: ['items', 'popper'],
     template: '<div class="u-dropdown"><slot /></div>',
   },
+  NotificationBell: {
+    name: 'NotificationBell',
+    template: '<div class="notification-bell-stub" />',
+  },
 }
 
 describe('Default client portal layout (FE-04)', () => {

@@ -80,9 +80,57 @@ export const getSupportEmpresas = async (): Promise<SupportEmpresa[]> => {
   return await apiService.get<SupportEmpresa[]>('/support/empresas/')
 }
 
+export interface CompanyModule {
+  id: number
+  codigo?: string
+  nombre: string
+  activo?: boolean
+}
+
+export interface CreateExternalTicketPayload {
+  empresa_id: number
+  modulo_id: number
+  canal_origen: string
+  pestana_o_documento: string
+  asunto: string
+  descripcion: string
+  mensaje_error?: string
+  prioridad: TicketPriority
+}
+
+export interface CreateExternalTicketResponse {
+  id?: number
+  radicado: string
+  estado: TicketStatus
+  fecha_creacion: string
+  asunto: string
+  modulo: { id: number; nombre: string }
+  empresa: { id: number; nombre: string }
+  canal_origen: string
+  mensaje?: string
+}
+
+export const getCompanyModules = async (empresaId: number): Promise<CompanyModule[]> => {
+  try {
+    return await apiService.get<CompanyModule[]>(`/support/empresas/${empresaId}/modulos/`)
+  } catch {
+    return await apiService.get<CompanyModule[]>('/modulos/', {
+      params: { empresa: empresaId },
+    })
+  }
+}
+
+export const createExternalTicket = async (
+  payload: CreateExternalTicketPayload,
+): Promise<CreateExternalTicketResponse> => {
+  return await apiService.post<CreateExternalTicketResponse>('/support/tickets/', payload)
+}
+
 export const supportTicketService = {
   listSupportTickets,
   getSupportEmpresas,
+  getCompanyModules,
+  createExternalTicket,
 }
 
 export default supportTicketService

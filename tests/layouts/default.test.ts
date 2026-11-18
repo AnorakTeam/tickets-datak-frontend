@@ -3,22 +3,26 @@ import { mount } from '@vue/test-utils'
 import { computed } from 'vue'
 import DefaultLayout from '~/layouts/default.vue'
 
-const { logoutMock } = vi.hoisted(() => ({
+const { logoutMock, authState } = vi.hoisted(() => ({
   logoutMock: vi.fn(),
-}))
-
-vi.mock('~/stores/auth', () => ({
-  useAuthStore: () => ({
+  authState: {
     isAuthenticated: true,
-    empresa: { id: 1, nombre: 'Empresa Demo' },
+    empresa: { id: 1, nombre: 'Empresa Demo' } as any,
     user: {
       id: 1,
       nombre: 'Cliente Datak',
       correo: 'cliente@datak.co',
       rol: 'cliente',
-    },
-    logout: logoutMock,
-  }),
+    } as any,
+    isSupportStaff: false,
+    logout: vi.fn(),
+  },
+}))
+
+authState.logout = logoutMock
+
+vi.mock('~/stores/auth', () => ({
+  useAuthStore: () => authState,
 }))
 
 global.computed = computed
@@ -81,5 +85,26 @@ describe('Default client portal layout (FE-04)', () => {
     await items[0][0].click()
 
     expect(logoutMock).toHaveBeenCalledOnce()
+  })
+
+  it('renders support staff navigation and hides client chatbot for support users', () => {
+    authState.isSupportStaff = true
+    authState.user = {
+      id: 2,
+      nombre: 'Agente Soporte',
+      correo: 'agente@datak.co',
+      rol: 'agente_soporte',
+    }
+
+    const wrapper = mount(DefaultLayout, {
+      slots: { default: '<p>Consola de soporte</p>' },
+      global: { stubs },
+    })
+
+    expect(wrapper.text()).toContain('Bandeja de soporte')
+    expect(wrapper.text()).toContain('Registrar ticket')
+    expect(wrapper.text()).toContain('Mis asignados')
+    expect(wrapper.text()).toContain('Agente de soporte')
+    expect(wrapper.text()).not.toContain('Reportar incidencia')
   })
 })

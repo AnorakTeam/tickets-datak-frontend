@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { useAuthStore } from '~/stores/auth'
 import ChatbotWidget from '~/components/chatbot/ChatbotWidget.vue'
+import NotificationBell from '~/components/notifications/NotificationBell.vue'
 
 const authStore = useAuthStore()
 
@@ -56,33 +57,37 @@ const userMenuItems = computed(() => [[
           </UButton>
         </nav>
 
-        <UDropdown
-          v-if="authStore.isAuthenticated"
-          :items="userMenuItems"
-          :popper="{ placement: 'bottom-end' }"
-        >
-          <UButton
-            color="gray"
-            variant="ghost"
-            trailing-icon="i-heroicons-chevron-down"
-            aria-label="Abrir menú de usuario"
-            class="min-w-0"
+        <div v-if="authStore.isAuthenticated" class="flex items-center gap-2">
+          <!-- Notification Center Bell (FE-21) -->
+          <NotificationBell />
+
+          <UDropdown
+            :items="userMenuItems"
+            :popper="{ placement: 'bottom-end' }"
           >
-            <span class="flex min-w-0 items-center gap-2">
-              <span class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-slate-100 text-slate-600">
-                <UIcon name="i-heroicons-user" class="h-4 w-4" />
-              </span>
-              <span class="hidden min-w-0 text-left sm:block">
-                <span class="block max-w-[10rem] truncate text-sm font-medium text-slate-800">
-                  {{ authStore.user?.nombre || 'Cliente' }}
+            <UButton
+              color="gray"
+              variant="ghost"
+              trailing-icon="i-heroicons-chevron-down"
+              aria-label="Abrir menú de usuario"
+              class="min-w-0"
+            >
+              <span class="flex min-w-0 items-center gap-2">
+                <span class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-slate-100 text-slate-600">
+                  <UIcon name="i-heroicons-user" class="h-4 w-4" />
                 </span>
-                <span class="block max-w-[10rem] truncate text-xs font-normal text-slate-500">
-                  {{ authStore.user?.correo }}
+                <span class="hidden min-w-0 text-left sm:block">
+                  <span class="block max-w-[10rem] truncate text-sm font-medium text-slate-800">
+                    {{ authStore.user?.nombre || 'Cliente' }}
+                  </span>
+                  <span class="block max-w-[10rem] truncate text-xs font-normal text-slate-500">
+                    {{ authStore.user?.correo }}
+                  </span>
                 </span>
               </span>
-            </span>
-          </UButton>
-        </UDropdown>
+            </UButton>
+          </UDropdown>
+        </div>
       </div>
 
       <div v-if="authStore.empresa" class="border-t border-slate-100 px-4 py-2 text-xs text-slate-600 lg:hidden">

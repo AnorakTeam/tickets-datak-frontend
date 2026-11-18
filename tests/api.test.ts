@@ -150,6 +150,60 @@ describe('ApiClient and Services (FE-02)', () => {
     expect(refreshCallCount).toBe(1)
   })
 
+  it('isolates concurrent refresh operations across two Pinia sessions', async () => {
+    const firstPinia = createPinia()
+    const secondPinia = createPinia()
+
+    setActivePinia(firstPinia)
+    const firstStore = useAuthStore()
+    firstStore.accessToken.value = 'expired-first'
+    firstStore.refreshToken.value = 'refresh-first'
+
+    setActivePinia(secondPinia)
+    const secondStore = useAuthStore()
+    secondStore.accessToken.value = 'expired-second'
+    secondStore.refreshToken.value = 'refresh-second'
+
+    const refreshTokens: string[] = []
+    const requestHeaders: string[] = []
+
+    global.$fetch = vi.fn().mockImplementation(async (url: string, options: any) => {
+      if (url === '/api/core/auth/token/refresh/') {
+        const refreshToken = options.body.refresh as string
+        refreshTokens.push(refreshToken)
+        await new Promise((resolve) => setTimeout(resolve, 10))
+        return {
+          access: refreshToken === 'refresh-first' ? 'new-first' : 'new-second',
+        }
+      }
+
+      const authorization = options.headers?.Authorization as string
+      requestHeaders.push(authorization)
+      if (authorization === 'Bearer new-first') return { session: 'first' }
+      if (authorization === 'Bearer new-second') return { session: 'second' }
+
+      const error: any = new Error('Unauthorized')
+      error.response = { status: 401, _data: { detail: 'Token expirado' } }
+      throw error
+    }) as any
+
+    const client = createApiClient()
+    setActivePinia(firstPinia)
+    const firstRequest = client.get('/client/tickets/')
+    setActivePinia(secondPinia)
+    const secondRequest = client.get('/client/tickets/')
+
+    const [firstResponse, secondResponse] = await Promise.all([firstRequest, secondRequest])
+
+    expect(firstResponse).toEqual({ session: 'first' })
+    expect(secondResponse).toEqual({ session: 'second' })
+    expect(refreshTokens.sort()).toEqual(['refresh-first', 'refresh-second'])
+    expect(firstStore.accessToken.value).toBe('new-first')
+    expect(secondStore.accessToken.value).toBe('new-second')
+    expect(requestHeaders).toContain('Bearer new-first')
+    expect(requestHeaders).toContain('Bearer new-second')
+  })
+
   it('prevents infinite retry loop when retried request also responds with 401', async () => {
     const authStore = useAuthStore()
     authStore.accessToken.value = 'invalid-jwt'

@@ -47,28 +47,25 @@ interface FetchErrorLike {
   data?: unknown
 }
 
-export const createApiClient = () => {
-  // Concurrency mutex: single shared promise for in-flight token refresh
-  let refreshPromise: Promise<string | null> | null = null
+type AuthStore = ReturnType<typeof useAuthStore>
 
-  const getHeaders = (customHeaders?: Record<string, string>): Record<string, string> => {
+export const createApiClient = () => {
+  // Deduplicate refreshes only for requests belonging to the same auth store.
+  const refreshPromises = new WeakMap<AuthStore, Promise<string | null>>()
+
+  const getHeaders = (authStore: AuthStore | null, customHeaders?: Record<string, string>): Record<string, string> => {
     const headers: Record<string, string> = {
       'Content-Type': 'application/json',
       ...customHeaders,
     }
 
-    try {
-      const authStore = useAuthStore()
-      const rawToken = authStore?.accessToken
-      const token = typeof rawToken === 'object' && rawToken !== null && 'value' in rawToken
-        ? (rawToken as { value: string | null }).value
-        : (rawToken as unknown as string | null)
+    const rawToken = authStore?.accessToken
+    const token = typeof rawToken === 'object' && rawToken !== null && 'value' in rawToken
+      ? (rawToken as { value: string | null }).value
+      : (rawToken as unknown as string | null)
 
-      if (token && typeof token === 'string') {
-        headers['Authorization'] = `Bearer ${token}`
-      }
-    } catch {
-      // Pinia might not be active in non-Vue test contexts
+    if (token && typeof token === 'string') {
+      headers['Authorization'] = `Bearer ${token}`
     }
 
     return headers
@@ -94,15 +91,16 @@ export const createApiClient = () => {
     throw new ApiError(message, status, errors, rawData)
   }
 
-  const performTokenRefresh = async (): Promise<string | null> => {
-    if (refreshPromise) {
-      return refreshPromise
+  const performTokenRefresh = (authStore: AuthStore): Promise<string | null> => {
+    const pendingRefresh = refreshPromises.get(authStore)
+    if (pendingRefresh) {
+      return pendingRefresh
     }
 
-    refreshPromise = (async () => {
+    // Queue the operation so the promise is registered even if the refresh token is missing.
+    const refreshOperation = Promise.resolve().then(async (): Promise<string | null> => {
       try {
-        const authStore = useAuthStore()
-        const rawRefresh = authStore?.refreshToken
+        const rawRefresh = authStore.refreshToken
         const refreshToken = typeof rawRefresh === 'object' && rawRefresh !== null && 'value' in rawRefresh
           ? (rawRefresh as { value: string | null }).value
           : (rawRefresh as unknown as string | null)
@@ -128,26 +126,33 @@ export const createApiClient = () => {
         }
         throw new Error('Refresh response missing access token')
       } catch {
-        try {
-          const authStore = useAuthStore()
-          authStore.clear()
-        } catch {
-          // Ignore if store is inaccessible
-        }
+        authStore.clear()
         return null
-      } finally {
-        refreshPromise = null
       }
-    })()
+    }).finally(() => {
+      refreshPromises.delete(authStore)
+    })
 
-    return refreshPromise
+    refreshPromises.set(authStore, refreshOperation)
+    return refreshOperation
   }
 
   const request = async <T = unknown>(
     endpoint: string,
     method: 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE',
-    options: RequestOptions = {}
+    options: RequestOptions = {},
+    sessionStore?: AuthStore | null
   ): Promise<T> => {
+    // Resolve Pinia before awaiting any network operation; SSR contexts must not mix.
+    let authStore = sessionStore
+    if (authStore === undefined) {
+      try {
+        authStore = useAuthStore()
+      } catch {
+        authStore = null
+      }
+    }
+
     const baseURL = '/api/core'
     const cleanEndpoint = endpoint.startsWith('/') ? endpoint : `/${endpoint}`
     const url = `${baseURL}${cleanEndpoint}`
@@ -155,7 +160,7 @@ export const createApiClient = () => {
     try {
       return await $fetch<T>(url, {
         method,
-        headers: getHeaders(options.headers),
+        headers: getHeaders(authStore, options.headers),
         params: options.params as Record<string, string | number | boolean> | undefined,
         body: options.body as BodyInit | Record<string, unknown> | null | undefined,
         signal: options.signal,
@@ -167,7 +172,7 @@ export const createApiClient = () => {
       // Concurrency & single-retry handling for 401 Unauthorized
       const isRefreshEndpoint = endpoint.includes('/auth/token/refresh')
       if (status === 401 && !options._retry && !isRefreshEndpoint) {
-        const newAccessToken = await performTokenRefresh()
+        const newAccessToken = authStore ? await performTokenRefresh(authStore) : null
         if (newAccessToken) {
           const retryHeaders: Record<string, string> = {
             ...(options.headers || {}),
@@ -177,7 +182,7 @@ export const createApiClient = () => {
             ...options,
             headers: retryHeaders,
             _retry: true, // Strict retry loop prevention
-          })
+          }, authStore)
         }
       }
 

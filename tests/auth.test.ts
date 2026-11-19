@@ -1,171 +1,158 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest'
-import { setActivePinia, createPinia } from 'pinia'
-import { useAuthStore } from '../app/stores/auth'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { createPinia, setActivePinia } from 'pinia'
+import { installNuxtMocks } from './helpers/nuxtMocks'
+import { useAuthStore, type UserInfo } from '../app/stores/auth'
 
-interface CookieOptions {
-  default?: () => unknown
-  maxAge?: number
-  path?: string
-  sameSite?: string
-  secure?: boolean
+const clientUser: UserInfo = {
+  id: 1,
+  correo: 'cliente@datak.co',
+  nombre: 'Cliente Datak',
+  rol: 'cliente',
+  empresa: { id: 1, nombre: 'Datak' },
 }
 
-const cookieJar = new Map<string, { value: any }>()
-const cookieOptions = new Map<string, CookieOptions>()
-
-global.useCookie = ((name: string, options: CookieOptions = {}) => {
-  cookieOptions.set(name, options)
-
-  if (!cookieJar.has(name)) {
-    cookieJar.set(name, { value: options.default?.() ?? null })
-  }
-
-  return cookieJar.get(name)!
-}) as typeof useCookie
-global.computed = (fn: () => any) => ({ get value() { return fn() } })
-global.navigateTo = vi.fn()
+let nuxtMocks: ReturnType<typeof installNuxtMocks>
 
 describe('useAuthStore', () => {
   beforeEach(() => {
-    cookieJar.clear()
-    cookieOptions.clear()
+    nuxtMocks = installNuxtMocks()
     setActivePinia(createPinia())
-    vi.clearAllMocks()
   })
 
-  it('initializes with unauthenticated state', () => {
+  afterEach(() => {
+    setActivePinia(undefined)
+    vi.unstubAllGlobals()
+  })
+
+  it('starts unauthenticated with no user, company, or role', () => {
     const store = useAuthStore()
-    expect(store.isAuthenticated.value).toBe(false)
-    expect(store.user.value).toBeNull()
+
+    expect(store.accessToken).toBeNull()
+    expect(store.refreshToken).toBeNull()
+    expect(store.user).toBeNull()
+    expect(store.isAuthenticated).toBe(false)
+    expect(store.empresa).toBeNull()
+    expect(store.userRole).toBeNull()
   })
 
   it('configures session cookies for application-wide persistence', () => {
     useAuthStore()
 
-    expect(cookieOptions.get('access_token')).toMatchObject({
+    expect(nuxtMocks.cookieOptions.get('access_token')).toMatchObject({
       maxAge: 60 * 60 * 2,
       path: '/',
       sameSite: 'lax',
     })
-    expect(cookieOptions.get('refresh_token')).toMatchObject({
+    expect(nuxtMocks.cookieOptions.get('refresh_token')).toMatchObject({
       maxAge: 60 * 60 * 24 * 7,
       path: '/',
       sameSite: 'lax',
     })
-    expect(cookieOptions.get('auth_user')).toMatchObject({
+    expect(nuxtMocks.cookieOptions.get('auth_user')).toMatchObject({
       maxAge: 60 * 60 * 24 * 7,
       path: '/',
       sameSite: 'lax',
     })
   })
 
-  it('updates state upon setting session', () => {
+  it('stores a successful session and exposes the user and company', () => {
     const store = useAuthStore()
-    store.setSession('test-access', 'test-refresh', {
-      id: 1,
-      correo: 'cliente@acme.com',
-      nombre: 'Test Client',
-      rol: 'cliente',
-      empresa: { id: 1, nombre: 'Acme Corp' },
-    })
 
-    expect(store.accessToken.value).toBe('test-access')
-    expect(store.refreshToken.value).toBe('test-refresh')
-    expect(store.user.value?.correo).toBe('cliente@acme.com')
-    expect(store.empresa.value?.nombre).toBe('Acme Corp')
+    store.setSession('access-token', 'refresh-token', clientUser)
+
+    expect(store.accessToken).toBe('access-token')
+    expect(store.refreshToken).toBe('refresh-token')
+    expect(store.user).toEqual(clientUser)
+    expect(store.isAuthenticated).toBe(true)
+    expect(store.empresa).toEqual(clientUser.empresa)
+    expect(store.userRole).toBe('cliente')
   })
+
+  it.each(['cliente', 'agente_soporte', 'responsable_atencion'] as const)(
+    'exposes the %s user role',
+    (role) => {
+      const store = useAuthStore()
+      store.setSession('access-token', 'refresh-token', { ...clientUser, rol: role })
+
+      expect(store.userRole).toBe(role)
+    },
+  )
 
   it('restores the persisted session when the Pinia store is recreated', () => {
     const firstStore = useAuthStore()
-    firstStore.setSession('persisted-access', 'persisted-refresh', {
-      id: 1,
-      correo: 'cliente@datak.co',
-      nombre: 'Cliente Datak',
-      rol: 'cliente',
-      empresa: { id: 1, nombre: 'Datak' },
-    })
+    firstStore.setSession('persisted-access', 'persisted-refresh', clientUser)
 
     setActivePinia(createPinia())
     const restoredStore = useAuthStore()
 
-    expect(restoredStore.isAuthenticated.value).toBe(true)
-    expect(restoredStore.accessToken.value).toBe('persisted-access')
-    expect(restoredStore.refreshToken.value).toBe('persisted-refresh')
-    expect(restoredStore.user.value?.correo).toBe('cliente@datak.co')
+    expect(restoredStore.isAuthenticated).toBe(true)
+    expect(restoredStore.accessToken).toBe('persisted-access')
+    expect(restoredStore.refreshToken).toBe('persisted-refresh')
+    expect(restoredStore.user).toEqual(clientUser)
   })
 
-  it('clears session upon logout', () => {
+  it('clears tokens, user, and derived authentication state on logout', () => {
     const store = useAuthStore()
-    store.setSession('test-access', 'test-refresh', {
-      id: 1,
-      correo: 'cliente@acme.com',
-      nombre: 'Test Client',
-      rol: 'cliente',
-    })
+    store.setSession('access-token', 'refresh-token', clientUser)
 
     store.clear()
-    expect(store.accessToken.value).toBeNull()
-    expect(store.refreshToken.value).toBeNull()
-    expect(store.user.value).toBeNull()
+
+    expect(store.accessToken).toBeNull()
+    expect(store.refreshToken).toBeNull()
+    expect(store.user).toBeNull()
+    expect(store.isAuthenticated).toBe(false)
+    expect(store.empresa).toBeNull()
+    expect(store.userRole).toBeNull()
   })
 
   it('logs in, stores the backend session, and redirects to tickets', async () => {
-    global.$fetch = vi.fn().mockResolvedValue({
+    const fetchMock = vi.fn().mockResolvedValue({
       access: 'access-token',
       refresh: 'refresh-token',
-      user: {
-        id: 1,
-        correo: 'cliente@datak.co',
-        nombre: 'Cliente Datak',
-        rol: 'cliente',
-        empresa: { id: 1, nombre: 'Datak' },
-      },
-    }) as any
+      user: clientUser,
+    })
+    vi.stubGlobal('$fetch', fetchMock)
 
     const store = useAuthStore()
     await store.login('cliente@datak.co', 'secret')
 
-    expect(global.$fetch).toHaveBeenCalledWith('/api/core/auth/token/', expect.objectContaining({
+    expect(fetchMock).toHaveBeenCalledWith('/api/core/auth/token/', expect.objectContaining({
       method: 'POST',
       body: { correo: 'cliente@datak.co', password: 'secret' },
     }))
-    expect(store.accessToken.value).toBe('access-token')
-    expect(store.refreshToken.value).toBe('refresh-token')
-    expect(store.user.value?.correo).toBe('cliente@datak.co')
-    expect(global.navigateTo).toHaveBeenCalledWith('/tickets')
+    expect(store.accessToken).toBe('access-token')
+    expect(store.refreshToken).toBe('refresh-token')
+    expect(store.user).toEqual(clientUser)
+    expect(nuxtMocks.navigateTo).toHaveBeenCalledWith('/tickets')
   })
 
   it('does not mutate the session or redirect when login fails', async () => {
-    global.$fetch = vi.fn().mockRejectedValue({
+    vi.stubGlobal('$fetch', vi.fn().mockRejectedValue({
       response: {
         status: 401,
         _data: { detail: 'Credenciales inválidas' },
       },
-    }) as any
+    }))
 
     const store = useAuthStore()
 
     await expect(store.login('cliente@datak.co', 'invalid')).rejects.toThrow('Credenciales inválidas')
-    expect(store.accessToken.value).toBeNull()
-    expect(store.refreshToken.value).toBeNull()
-    expect(store.user.value).toBeNull()
-    expect(global.navigateTo).not.toHaveBeenCalled()
+    expect(store.accessToken).toBeNull()
+    expect(store.refreshToken).toBeNull()
+    expect(store.user).toBeNull()
+    expect(nuxtMocks.navigateTo).not.toHaveBeenCalled()
   })
 
   it('logs out, clears the session, and redirects to login', async () => {
     const store = useAuthStore()
-    store.setSession('access-token', 'refresh-token', {
-      id: 1,
-      correo: 'cliente@datak.co',
-      nombre: 'Cliente Datak',
-      rol: 'cliente',
-    })
+    store.setSession('access-token', 'refresh-token', clientUser)
 
     await store.logout()
 
-    expect(store.accessToken.value).toBeNull()
-    expect(store.refreshToken.value).toBeNull()
-    expect(store.user.value).toBeNull()
-    expect(global.navigateTo).toHaveBeenCalledWith('/login')
+    expect(store.accessToken).toBeNull()
+    expect(store.refreshToken).toBeNull()
+    expect(store.user).toBeNull()
+    expect(store.isAuthenticated).toBe(false)
+    expect(nuxtMocks.navigateTo).toHaveBeenCalledWith('/login')
   })
 })

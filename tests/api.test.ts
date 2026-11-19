@@ -1,21 +1,23 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest'
-import { setActivePinia, createPinia } from 'pinia'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { createPinia, setActivePinia } from 'pinia'
 import { useAuthStore } from '../app/stores/auth'
-import { createApiClient, ApiError } from '../app/services/api'
-
-// Mock useCookie and useState for test environment
-global.useCookie = () => ({ value: null })
-global.useState = (key: string, init: () => any) => ({ value: init() })
-global.computed = (fn: () => any) => ({ get value() { return fn() } })
+import { ApiError, createApiClient } from '../app/services/api'
+import { installNuxtMocks } from './helpers/nuxtMocks'
 
 describe('ApiClient and Services (FE-02)', () => {
   beforeEach(() => {
+    installNuxtMocks()
     setActivePinia(createPinia())
-    vi.restoreAllMocks()
   })
 
-  it('creates client with get, post, put, patch, delete methods', () => {
+  afterEach(() => {
+    setActivePinia(undefined)
+    vi.unstubAllGlobals()
+  })
+
+  it('creates a client with the supported HTTP methods', () => {
     const client = createApiClient()
+
     expect(typeof client.get).toBe('function')
     expect(typeof client.post).toBe('function')
     expect(typeof client.put).toBe('function')
@@ -23,56 +25,59 @@ describe('ApiClient and Services (FE-02)', () => {
     expect(typeof client.delete).toBe('function')
   })
 
-  it('attaches Bearer token header when authStore has accessToken', async () => {
+  it('sends requests through the relative API path and attaches a bearer token', async () => {
     const authStore = useAuthStore()
-    authStore.accessToken.value = 'mock-jwt-token'
+    authStore.accessToken = 'mock-jwt-token'
+    const fetchMock = vi.fn().mockResolvedValue({ success: true })
+    vi.stubGlobal('$fetch', fetchMock)
 
-    let capturedHeaders: any = null
-    global.$fetch = vi.fn().mockImplementation((url, opts) => {
-      capturedHeaders = opts.headers
-      return Promise.resolve({ success: true })
-    }) as any
+    const result = await createApiClient().get('/client/tickets/')
 
-    const client = createApiClient()
-    const res = await client.get('/client/tickets/')
-
-    expect(res).toEqual({ success: true })
-    expect(capturedHeaders['Authorization']).toBe('Bearer mock-jwt-token')
+    expect(result).toEqual({ success: true })
+    expect(fetchMock).toHaveBeenCalledWith('/api/core/client/tickets/', expect.objectContaining({
+      method: 'GET',
+      headers: expect.objectContaining({
+        Authorization: 'Bearer mock-jwt-token',
+      }),
+    }))
   })
 
-  it('throws ApiError with message and status on fetch error', async () => {
-    const errorObj: any = new Error('Not found')
-    errorObj.response = {
-      status: 404,
-      _data: { detail: 'Ticket no encontrado' },
-    }
+  it('converts an HTTP error into an ApiError with the server message and status', async () => {
+    const error = Object.assign(new Error('Not found'), {
+      response: {
+        status: 404,
+        _data: { detail: 'Ticket no encontrado' },
+      },
+    })
+    vi.stubGlobal('$fetch', vi.fn().mockRejectedValue(error))
 
-    global.$fetch = vi.fn().mockRejectedValue(errorObj) as any
-
-    const client = createApiClient()
-    await expect(client.get('/client/tickets/TK-9999-999999/')).rejects.toThrow(ApiError)
+    await expect(createApiClient().get('/client/tickets/TK-9999-999999/'))
+      .rejects.toMatchObject({
+        name: 'ApiError',
+        message: 'Ticket no encontrado',
+        status: 404,
+      } satisfies Partial<ApiError>)
   })
 
-  it('clears session on 401 response error if refresh fails', async () => {
+  it('clears the session when an unauthorized response cannot refresh the token', async () => {
     const authStore = useAuthStore()
-    authStore.accessToken.value = 'expired-token'
-    authStore.refreshToken.value = 'expired-refresh'
+    authStore.setSession('expired-token', 'expired-refresh', {
+      id: 1,
+      correo: 'cliente@acme.com',
+      nombre: 'Test Client',
+      rol: 'cliente',
+    })
+    vi.stubGlobal('$fetch', vi.fn().mockRejectedValue(Object.assign(new Error('Unauthorized'), {
+      response: {
+        status: 401,
+        _data: { detail: 'Token inválido' },
+      },
+    })))
 
-    const errorObj: any = new Error('Unauthorized')
-    errorObj.response = {
-      status: 401,
-      _data: { detail: 'Token inválido' },
-    }
+    await expect(createApiClient().get('/client/tickets/')).rejects.toBeInstanceOf(ApiError)
 
-    global.$fetch = vi.fn().mockRejectedValue(errorObj) as any
-
-    const client = createApiClient()
-    try {
-      await client.get('/client/tickets/')
-    } catch {
-      // Expected rejection
-    }
-
-    expect(authStore.accessToken.value).toBeNull()
+    expect(authStore.accessToken).toBeNull()
+    expect(authStore.refreshToken).toBeNull()
+    expect(authStore.user).toBeNull()
   })
 })

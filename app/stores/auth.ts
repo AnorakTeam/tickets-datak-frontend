@@ -1,4 +1,5 @@
 import { defineStore } from 'pinia'
+import { authService } from '~/services/authService'
 
 export interface EmpresaInfo {
   id: number
@@ -14,22 +15,42 @@ export interface UserInfo {
   empresa?: EmpresaInfo | null
 }
 
+const ACCESS_TOKEN_MAX_AGE = 60 * 60 * 2
+const SESSION_MAX_AGE = 60 * 60 * 24 * 7
+
 export const useAuthStore = defineStore('auth', () => {
-  const accessToken = useCookie<string | null>('auth_access_token', {
-    maxAge: 60 * 60 * 2, // 2 hours
+  const accessToken = useCookie<string | null>('access_token', {
+    default: () => null,
+    maxAge: ACCESS_TOKEN_MAX_AGE,
+    path: '/',
     sameSite: 'lax',
+    secure: import.meta.env.PROD,
   })
 
-  const refreshToken = useCookie<string | null>('auth_refresh_token', {
-    maxAge: 60 * 60 * 24 * 7, // 7 days
+  const refreshToken = useCookie<string | null>('refresh_token', {
+    default: () => null,
+    maxAge: SESSION_MAX_AGE,
+    path: '/',
     sameSite: 'lax',
+    secure: import.meta.env.PROD,
   })
 
-  const user = useState<UserInfo | null>('auth_user', () => null)
+  const user = useCookie<UserInfo | null>('auth_user', {
+    default: () => null,
+    maxAge: SESSION_MAX_AGE,
+    path: '/',
+    sameSite: 'lax',
+    secure: import.meta.env.PROD,
+  })
 
   const isAuthenticated = computed(() => !!accessToken.value)
   const empresa = computed(() => user.value?.empresa || null)
   const userRole = computed(() => user.value?.rol || null)
+  const isSupportStaff = computed(() => {
+    const role = userRole.value
+    return role === 'agente_soporte' || role === 'responsable_atencion'
+  })
+  const isClient = computed(() => userRole.value === 'cliente')
 
   const setSession = (access: string, refresh: string, userData: UserInfo) => {
     accessToken.value = access
@@ -43,6 +64,21 @@ export const useAuthStore = defineStore('auth', () => {
     user.value = null
   }
 
+  const login = async (email: string, password: string) => {
+    const session = await authService.login({ correo: email, password })
+    setSession(session.access, session.refresh, session.user)
+    if (session.user.rol === 'agente_soporte' || session.user.rol === 'responsable_atencion') {
+      await navigateTo('/support/tickets')
+    } else {
+      await navigateTo('/tickets')
+    }
+  }
+
+  const logout = async () => {
+    clear()
+    await navigateTo('/login')
+  }
+
   return {
     accessToken,
     refreshToken,
@@ -50,7 +86,11 @@ export const useAuthStore = defineStore('auth', () => {
     isAuthenticated,
     empresa,
     userRole,
+    isSupportStaff,
+    isClient,
     setSession,
     clear,
+    login,
+    logout,
   }
 })

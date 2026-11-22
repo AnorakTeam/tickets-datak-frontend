@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, onMounted, ref, watch } from 'vue'
 import { useSupportTicketDetail } from '~/composables/useSupportTicketDetail'
+import SupportTicketActions from '~/components/support/SupportTicketActions.vue'
 import type { SupportTicketHistoryItem } from '~/services/supportTicketDetailService'
 import {
   formatTicketDateTime,
@@ -282,12 +283,7 @@ onMounted(refresh)
               </div>
             </dl>
           </section>
-          <section class="rounded-xl border border-dashed border-slate-300 bg-slate-50 p-5 sm:p-6">
-            <h2 class="text-sm font-semibold text-slate-900">Acciones de gestión</h2>
-            <p class="mt-2 text-sm leading-6 text-slate-600">
-              Las opciones de clasificación, asignación y resolución se habilitarán en esta sección.
-            </p>
-          </section>
+          <SupportTicketActions :ticket="ticket" @updated="refresh" />
         </aside>
       </div>
     </template>

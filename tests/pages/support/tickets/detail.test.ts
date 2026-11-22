@@ -62,6 +62,7 @@ const stubs = {
   NuxtLink: { props: ['to'], template: '<a :href="to"><slot /></a>' },
   UBadge: { props: ['color', 'variant', 'size'], template: '<span><slot /></span>' },
   SupportTicketActions: { props: ['ticket'], template: '<div data-testid="support-actions-integration" />' },
+  EngineerTicketActions: { props: ['ticket'], template: '<div data-testid="engineer-actions-integration" />' },
   UIcon: { props: ['name'], template: '<i :data-icon="name" />' },
   UButton: {
     props: ['disabled', 'color', 'variant', 'icon'],
@@ -114,6 +115,7 @@ describe('Support ticket detail page (FE-18)', () => {
     expect(audit[1]?.text()).toContain('Nota interna')
     expect(wrapper.get('[data-testid="support-management-summary"]').text()).toContain('Bug')
     expect(wrapper.get('[data-testid="support-actions-integration"]').exists()).toBe(true)
+    expect(wrapper.get('[data-testid="engineer-actions-integration"]').exists()).toBe(true)
   })
 
   it('shows a generic 404 message without leaking server details', async () => {

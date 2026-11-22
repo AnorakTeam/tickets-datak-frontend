@@ -2,6 +2,7 @@
 import { computed, onMounted, ref, watch } from 'vue'
 import { useSupportTicketDetail } from '~/composables/useSupportTicketDetail'
 import SupportTicketActions from '~/components/support/SupportTicketActions.vue'
+import EngineerTicketActions from '~/components/support/EngineerTicketActions.vue'
 import type { SupportTicketHistoryItem } from '~/services/supportTicketDetailService'
 import {
   formatTicketDateTime,
@@ -284,6 +285,7 @@ onMounted(refresh)
             </dl>
           </section>
           <SupportTicketActions :ticket="ticket" @updated="refresh" />
+          <EngineerTicketActions :ticket="ticket" @updated="refresh" />
         </aside>
       </div>
     </template>

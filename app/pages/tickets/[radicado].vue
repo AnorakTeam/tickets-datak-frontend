@@ -93,7 +93,7 @@ const copyRadicado = async () => {
 
   try {
     if (typeof navigator === 'undefined' || !navigator.clipboard?.writeText) {
-      throw new Error('Clipboard unavailable')
+      throw new Error('Portapapeles no disponible en el navegador')
     }
 
     await navigator.clipboard.writeText(ticket.value.radicado)

@@ -44,7 +44,7 @@ const {
 } = useSupportTickets()
 
 const localSearch = ref('')
-let searchDebounceTimeout: any = null
+let searchDebounceTimeout: ReturnType<typeof setTimeout> | null = null
 
 const onSearchInput = (value: string) => {
   localSearch.value = value

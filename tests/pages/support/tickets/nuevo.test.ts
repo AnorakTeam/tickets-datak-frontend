@@ -4,13 +4,11 @@ import SupportNuevoTicketPage from '~/pages/support/tickets/nuevo.vue'
 
 const {
   getSupportEmpresasMock,
-  getCompanyModulesMock,
   createExternalTicketMock,
   mockPush,
   mockAddToast,
 } = vi.hoisted(() => ({
   getSupportEmpresasMock: vi.fn(),
-  getCompanyModulesMock: vi.fn(),
   createExternalTicketMock: vi.fn(),
   mockPush: vi.fn(),
   mockAddToast: vi.fn(),
@@ -25,7 +23,6 @@ vi.mock('vue-router', () => ({
 vi.mock('~/services/supportTicketService', () => ({
   supportTicketService: {
     getSupportEmpresas: getSupportEmpresasMock,
-    getCompanyModules: getCompanyModulesMock,
     createExternalTicket: createExternalTicketMock,
   },
 }))
@@ -36,14 +33,14 @@ global.useToast = () => ({
 global.useHead = vi.fn()
 global.definePageMeta = vi.fn()
 
-const mockEmpresas = [
-  { id: 1, nombre: 'Empresa Alpha' },
-  { id: 2, nombre: 'Empresa Beta' },
-]
-
 const mockModules = [
   { id: 10, codigo: 'MOD-FAC', nombre: 'Facturación Electrónica' },
   { id: 11, codigo: 'MOD-NOM', nombre: 'Nómina y Recursos Humanos' },
+]
+
+const mockEmpresas = [
+  { id: 1, nombre: 'Empresa Alpha', modulos_contratados: mockModules },
+  { id: 2, nombre: 'Empresa Beta', modulos: [] },
 ]
 
 const globalStubs = {
@@ -121,7 +118,6 @@ describe('Support Nuevo Ticket Page (FE-17)', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     getSupportEmpresasMock.mockResolvedValue(mockEmpresas)
-    getCompanyModulesMock.mockResolvedValue(mockModules)
   })
 
   it('protects route with support middleware and loads companies on mount', async () => {
@@ -132,7 +128,7 @@ describe('Support Nuevo Ticket Page (FE-17)', () => {
     expect(getSupportEmpresasMock).toHaveBeenCalledOnce()
   })
 
-  it('loads dynamic modules when selecting a client company', async () => {
+  it('loads dynamic modules from selected client company without extra requests', async () => {
     const wrapper = mountPage()
     await flushPromises()
 
@@ -142,7 +138,6 @@ describe('Support Nuevo Ticket Page (FE-17)', () => {
     await empresaSelect.setValue('1')
     await flushPromises()
 
-    expect(getCompanyModulesMock).toHaveBeenCalledWith(1)
     expect(wrapper.find('select[aria-label="Seleccionar módulo afectado"]').exists()).toBe(true)
     expect(wrapper.text()).toContain('Facturación Electrónica (MOD-FAC)')
   })

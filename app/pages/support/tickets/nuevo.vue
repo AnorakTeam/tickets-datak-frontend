@@ -76,7 +76,6 @@ const errors = reactive<Record<string, string>>({
 const empresas = ref<SupportEmpresa[]>([])
 const availableModules = ref<CompanyModule[]>([])
 const isLoadingEmpresas = ref(false)
-const isLoadingModules = ref(false)
 const isSubmitting = ref(false)
 const isModalOpen = ref(false)
 
@@ -120,26 +119,15 @@ const loadEmpresas = async () => {
 
 watch(
   () => form.empresa_id,
-  async (newEmpresaId) => {
+  (empresaId) => {
     form.modulo_id = null
-    availableModules.value = []
 
-    if (!newEmpresaId) return
+    const empresa = empresas.value.find(
+      (item) => item.id === empresaId,
+    )
 
-    isLoadingModules.value = true
-    try {
-      availableModules.value = await supportTicketService.getCompanyModules(newEmpresaId)
-    } catch {
-      availableModules.value = []
-      toast.add({
-        title: 'Error al cargar módulos',
-        description: 'No fue posible consultar los módulos contratados de la empresa seleccionada.',
-        color: 'red',
-        icon: 'i-lucide-alert-triangle',
-      })
-    } finally {
-      isLoadingModules.value = false
-    }
+    availableModules.value =
+      empresa?.modulos_contratados ?? empresa?.modulos ?? []
   },
 )
 
@@ -347,10 +335,6 @@ onMounted(() => {
             <div v-if="!form.empresa_id" class="rounded-lg border border-dashed border-default bg-muted p-4 text-center text-xs text-muted">
               <UIcon name="i-lucide-building-2" class="mx-auto h-5 w-5 text-dimmed mb-1" />
               Seleccione primero una empresa cliente para cargar sus módulos contratados.
-            </div>
-
-            <div v-else-if="isLoadingModules" class="py-3">
-              <div class="h-10 w-full animate-pulse rounded-lg bg-muted" />
             </div>
 
             <div

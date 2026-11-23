@@ -30,17 +30,17 @@ interface PriorityOption {
 
 const priorityOptions: PriorityOption[] = [
   { value: 'Baja', label: 'Baja', description: 'No bloquea la operación diaria', color: 'gray' },
-  { value: 'Media', label: 'Media', description: 'Afectación parcial de funcionalidades', color: 'blue' },
+  { value: 'Media', label: 'Media', description: 'Afectación parcial de funciones', color: 'blue' },
   { value: 'Alta', label: 'Alta', description: 'Bloqueo de una función importante', color: 'amber' },
-  { value: 'Critica', label: 'Crítica', description: 'Bloqueo total del sistema o módulo', color: 'red' },
+  { value: 'Critica', label: 'Crítica', description: 'Bloqueo total del sistema', color: 'red' },
 ]
 
 const channelOptions = [
-  { value: 'WhatsApp', label: 'WhatsApp', icon: 'i-heroicons-device-phone-mobile' },
-  { value: 'Slack', label: 'Slack', icon: 'i-heroicons-hashtag' },
-  { value: 'Correo', label: 'Correo electrónico', icon: 'i-heroicons-envelope' },
-  { value: 'Llamada', label: 'Llamada telefónica', icon: 'i-heroicons-phone' },
-  { value: 'Otro', label: 'Otro canal externo', icon: 'i-heroicons-ellipsis-horizontal-circle' },
+  { value: 'WhatsApp', label: 'WhatsApp', icon: 'i-lucide-message-circle' },
+  { value: 'Slack', label: 'Slack', icon: 'i-lucide-hash' },
+  { value: 'Correo', label: 'Correo electrónico', icon: 'i-lucide-mail' },
+  { value: 'Llamada', label: 'Llamada telefónica', icon: 'i-lucide-phone' },
+  { value: 'Otro', label: 'Otro canal externo', icon: 'i-lucide-more-horizontal' },
 ]
 
 const form = reactive<{
@@ -111,7 +111,7 @@ const loadEmpresas = async () => {
       title: 'Error al cargar empresas',
       description: 'No fue posible obtener el catálogo de empresas clientes.',
       color: 'red',
-      icon: 'i-heroicons-x-circle',
+      icon: 'i-lucide-x-circle',
     })
   } finally {
     isLoadingEmpresas.value = false
@@ -135,7 +135,7 @@ watch(
         title: 'Error al cargar módulos',
         description: 'No fue posible consultar los módulos contratados de la empresa seleccionada.',
         color: 'red',
-        icon: 'i-heroicons-exclamation-triangle',
+        icon: 'i-lucide-alert-triangle',
       })
     } finally {
       isLoadingModules.value = false
@@ -203,7 +203,7 @@ const handleSubmit = async () => {
       title: 'Formulario incompleto',
       description: 'Por favor complete todos los campos obligatorios antes de registrar el ticket.',
       color: 'red',
-      icon: 'i-heroicons-exclamation-circle',
+      icon: 'i-lucide-alert-circle',
     })
     return
   }
@@ -237,7 +237,7 @@ const handleSubmit = async () => {
       title: '¡Ticket externo registrado!',
       description: `Radicado generado: ${response.radicado}`,
       color: 'green',
-      icon: 'i-heroicons-check-circle',
+      icon: 'i-lucide-check-circle',
     })
   } catch (err: any) {
     toast.add({
@@ -245,7 +245,7 @@ const handleSubmit = async () => {
       description:
         err?.message || 'No fue posible registrar el ticket en el servidor. Intente nuevamente.',
       color: 'red',
-      icon: 'i-heroicons-x-circle',
+      icon: 'i-lucide-x-circle',
     })
   } finally {
     isSubmitting.value = false
@@ -263,31 +263,30 @@ onMounted(() => {
 </script>
 
 <template>
-  <div class="max-w-4xl mx-auto space-y-6">
+  <div class="max-w-2xl mx-auto space-y-6">
     <!-- Header / Navigation Back -->
-    <div class="flex items-center justify-between pb-2 border-b border-slate-200">
-      <div>
-        <NuxtLink
-          to="/support/tickets"
-          class="inline-flex items-center text-xs font-medium text-slate-500 hover:text-primary-600 mb-1"
-        >
-          <UIcon name="i-heroicons-arrow-left" class="mr-1 h-3.5 w-3.5" />
-          Volver a la bandeja de soporte
-        </NuxtLink>
-        <h1 class="text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl">
-          Registrar ticket por canal externo
-        </h1>
-        <p class="mt-1 text-sm text-slate-500">
-          Radicación formal de incidencias recibidas por WhatsApp, Slack, llamadas o correos en nombre del cliente.
-        </p>
-      </div>
+    <div>
+      <NuxtLink
+        to="/support/tickets"
+        class="inline-flex items-center text-xs font-medium text-muted hover:text-highlighted transition-colors mb-2"
+      >
+        <UIcon name="i-lucide-arrow-left" class="mr-1.5 h-3.5 w-3.5" />
+        Volver a la bandeja de soporte
+      </NuxtLink>
+      <p class="text-xs font-semibold uppercase tracking-wider text-amber-600 dark:text-amber-400">Consola de soporte</p>
+      <h1 class="mt-1 text-2xl font-bold tracking-tight text-highlighted sm:text-3xl">
+        Registrar ticket por canal externo
+      </h1>
+      <p class="mt-1 text-sm text-muted">
+        Radicación formal de incidencias recibidas por WhatsApp, Slack, llamadas o correos en nombre del cliente.
+      </p>
     </div>
 
     <!-- Main Form Card -->
     <form class="space-y-6" @submit.prevent="handleSubmit">
-      <div class="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm space-y-6">
+      <div class="rounded-xl border border-default bg-default p-6 shadow-sm space-y-5">
         <!-- 1. Empresa Cliente & Canal de Origen -->
-        <div class="grid grid-cols-1 gap-6 sm:grid-cols-2">
+        <div class="grid grid-cols-1 gap-5 sm:grid-cols-2">
           <!-- Empresa Selection -->
           <UFormGroup
             label="Empresa cliente"
@@ -297,7 +296,7 @@ onMounted(() => {
           >
             <select
               v-model="form.empresa_id"
-              class="w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm text-slate-800 focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500 disabled:opacity-50"
+              class="w-full rounded-lg border border-default bg-default px-3 py-2 text-sm text-default focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500 disabled:opacity-50"
               :disabled="isLoadingEmpresas || isSubmitting"
               aria-label="Seleccionar empresa cliente"
             >
@@ -323,7 +322,7 @@ onMounted(() => {
           >
             <select
               v-model="form.canal_origen"
-              class="w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm text-slate-800 focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500 disabled:opacity-50"
+              class="w-full rounded-lg border border-default bg-default px-3 py-2 text-sm text-default focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500 disabled:opacity-50"
               :disabled="isSubmitting"
               aria-label="Seleccionar canal de origen"
             >
@@ -339,34 +338,34 @@ onMounted(() => {
         </div>
 
         <!-- 2. Módulo Afectado Dinámico -->
-        <div class="space-y-2">
+        <div>
           <UFormGroup
             label="Módulo de software afectado"
             required
             :error="errors.modulo_id"
             help="Módulos contratados activos de la empresa cliente"
           >
-            <div v-if="!form.empresa_id" class="rounded-lg border border-dashed border-slate-300 bg-slate-50 p-4 text-center text-xs text-slate-500">
-              <UIcon name="i-heroicons-building-office" class="mx-auto h-5 w-5 text-slate-400 mb-1" />
+            <div v-if="!form.empresa_id" class="rounded-lg border border-dashed border-default bg-muted p-4 text-center text-xs text-muted">
+              <UIcon name="i-lucide-building-2" class="mx-auto h-5 w-5 text-dimmed mb-1" />
               Seleccione primero una empresa cliente para cargar sus módulos contratados.
             </div>
 
             <div v-else-if="isLoadingModules" class="py-3">
-              <div class="h-10 w-full animate-pulse rounded-md bg-slate-100" />
+              <div class="h-10 w-full animate-pulse rounded-lg bg-muted" />
             </div>
 
             <div
               v-else-if="availableModules.length === 0"
-              class="rounded-lg border border-amber-200 bg-amber-50 p-3 text-xs text-amber-800 flex items-center gap-2"
+              class="rounded-lg border border-amber-200 bg-amber-50/70 p-3 text-xs text-amber-800 dark:border-amber-900/50 dark:bg-amber-950/20 dark:text-amber-200 flex items-center gap-2"
             >
-              <UIcon name="i-heroicons-exclamation-triangle" class="h-4 w-4 shrink-0 text-amber-600" />
+              <UIcon name="i-lucide-alert-triangle" class="h-4 w-4 shrink-0 text-amber-600 dark:text-amber-400" />
               <span>Esta empresa no tiene módulos contratados activos registrados.</span>
             </div>
 
             <select
               v-else
               v-model="form.modulo_id"
-              class="w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm text-slate-800 focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500 disabled:opacity-50"
+              class="w-full rounded-lg border border-default bg-default px-3 py-2 text-sm text-default focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500 disabled:opacity-50"
               :disabled="isSubmitting"
               aria-label="Seleccionar módulo afectado"
             >
@@ -441,46 +440,46 @@ onMounted(() => {
 
         <!-- 7. Prioridad Estimada -->
         <div class="space-y-3">
-          <label class="block text-sm font-medium text-slate-700">
+          <label class="block text-xs font-semibold uppercase tracking-wider text-muted">
             Prioridad asignada <span class="text-red-500">*</span>
           </label>
-          <div class="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
+          <div class="grid grid-cols-1 gap-2.5 sm:grid-cols-2 lg:grid-cols-4">
             <label
               v-for="p in priorityOptions"
               :key="p.value"
-              class="relative flex cursor-pointer flex-col rounded-xl border p-3 text-left transition-all hover:bg-slate-50"
+              class="relative flex cursor-pointer flex-col rounded-lg border p-3 text-left transition-all"
               :class="form.prioridad === p.value
-                ? 'border-primary-500 ring-2 ring-primary-500/20 bg-primary-50/40'
-                : 'border-slate-200 bg-white'"
+                ? 'border-primary-500 ring-1 ring-primary-500 bg-primary-50/50 dark:bg-primary-950/20'
+                : 'border-default bg-default hover:bg-muted/60'"
             >
               <div class="flex items-center justify-between">
-                <span class="text-xs font-semibold text-slate-900">{{ p.label }}</span>
+                <span class="text-xs font-semibold text-highlighted">{{ p.label }}</span>
                 <input
                   v-model="form.prioridad"
                   type="radio"
                   name="priority"
                   :value="p.value"
-                  class="h-3.5 w-3.5 text-primary-600 border-slate-300 focus:ring-primary-500"
+                  class="h-3.5 w-3.5 text-primary-600 border-default focus:ring-primary-500"
                   :disabled="isSubmitting"
                 />
               </div>
-              <p class="mt-1 text-[11px] text-slate-500 leading-tight">
+              <p class="mt-1 text-[11px] text-muted leading-tight">
                 {{ p.description }}
               </p>
             </label>
           </div>
-          <p v-if="errors.prioridad" class="text-xs text-red-500">
+          <p v-if="errors.prioridad" class="text-xs text-red-500 dark:text-red-400">
             {{ errors.prioridad }}
           </p>
         </div>
       </div>
 
-      <!-- Action Buttons -->
+      <!-- Action Buttons (Single Signal Rule: one solid primary) -->
       <div class="flex items-center justify-end gap-3">
         <UButton
           to="/support/tickets"
           color="gray"
-          variant="ghost"
+          variant="outline"
           :disabled="isSubmitting"
         >
           Cancelar
@@ -488,7 +487,8 @@ onMounted(() => {
         <UButton
           type="submit"
           color="primary"
-          icon="i-heroicons-plus-circle"
+          variant="solid"
+          icon="i-lucide-plus"
           :loading="isSubmitting"
         >
           Registrar ticket externo
@@ -496,7 +496,7 @@ onMounted(() => {
       </div>
     </form>
 
-    <!-- Modal de confirmación de radicado exitoso (FE-07 reutilizado) -->
+    <!-- Modal de confirmación de radicado exitoso -->
     <RadicadoModal
       v-model="isModalOpen"
       :radicado="createdTicket.radicado"

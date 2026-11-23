@@ -9,6 +9,15 @@ node_modules/
 .env.*
 !.env.example
 
+# Terraform
+**/.terraform/
+*.tfstate
+*.tfstate.*
+*.tfvars
+!*.tfvars.example
+.terraformrc
+terraform.rc
+
 # Testing & Coverage
 coverage/
 *.lcov

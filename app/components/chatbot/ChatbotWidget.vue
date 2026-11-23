@@ -33,19 +33,11 @@ const height = ref<number>(600)
 const isResizing = ref<boolean>(false)
 const isMaximized = ref<boolean>(false)
 const preMaximizeDims = ref<{ width: number; height: number }>({ width: 440, height: 600 })
-const isDesktop = ref<boolean>(typeof window !== 'undefined' ? window.innerWidth >= 640 : false)
-
-const checkDesktop = () => {
-  if (typeof window !== 'undefined') {
-    isDesktop.value = window.innerWidth >= 640
-  }
-}
 
 const drawerStyle = computed(() => {
-  if (!isDesktop.value) return {}
   return {
-    width: `${width.value}px`,
-    height: `${height.value}px`,
+    width: `min(${width.value}px, calc(100vw - 2rem))`,
+    height: `min(${height.value}px, calc(100vh - 7rem))`,
   }
 })
 
@@ -73,8 +65,9 @@ type ResizeDirection = 'left' | 'top' | 'top-left'
 let cleanupResizeListeners: (() => void) | null = null
 
 const startResize = (direction: ResizeDirection, event: PointerEvent) => {
-  if (typeof window === 'undefined' || window.innerWidth < 640) return
+  if (typeof window === 'undefined') return
   event.preventDefault()
+  event.stopPropagation()
   isResizing.value = true
   isMaximized.value = false
 
@@ -95,26 +88,39 @@ const startResize = (direction: ResizeDirection, event: PointerEvent) => {
   }
   document.body.style.userSelect = 'none'
 
+  const target = event.currentTarget as HTMLElement | null
+  if (target?.setPointerCapture && event.pointerId !== undefined) {
+    try {
+      target.setPointerCapture(event.pointerId)
+    } catch {}
+  }
+
   const onPointerMove = (e: PointerEvent) => {
     if (!isResizing.value) return
 
     if (direction === 'left' || direction === 'top-left') {
       const deltaX = startX - e.clientX
       const maxW = Math.min(window.innerWidth - 32, 960)
-      width.value = Math.max(360, Math.min(maxW, startWidth + deltaX))
+      width.value = Math.max(340, Math.min(maxW, startWidth + deltaX))
     }
 
     if (direction === 'top' || direction === 'top-left') {
       const deltaY = startY - e.clientY
       const maxH = Math.min(window.innerHeight - 110, 880)
-      height.value = Math.max(460, Math.min(maxH, startHeight + deltaY))
+      height.value = Math.max(420, Math.min(maxH, startHeight + deltaY))
     }
   }
 
   const stopResize = () => {
+    if (!isResizing.value) return
     isResizing.value = false
     document.body.style.cursor = prevCursor
     document.body.style.userSelect = prevUserSelect
+    if (target?.releasePointerCapture && event.pointerId !== undefined) {
+      try {
+        target.releasePointerCapture(event.pointerId)
+      } catch {}
+    }
     window.removeEventListener('pointermove', onPointerMove)
     window.removeEventListener('pointerup', stopResize)
     window.removeEventListener('pointercancel', stopResize)
@@ -249,19 +255,12 @@ const formatTime = (date: Date): string => {
 }
 
 onMounted(() => {
-  checkDesktop()
-  if (typeof window !== 'undefined') {
-    window.addEventListener('resize', checkDesktop)
-  }
   initializeChat()
 })
 
 onUnmounted(() => {
   if (cleanupResizeListeners) {
     cleanupResizeListeners()
-  }
-  if (typeof window !== 'undefined') {
-    window.removeEventListener('resize', checkDesktop)
   }
 })
 
@@ -317,43 +316,49 @@ defineExpose({
     >
       <div
         v-if="isOpen"
-        class="fixed bottom-24 right-4 sm:right-6 z-50 w-[calc(100vw-2rem)] sm:w-auto h-[540px] sm:h-auto max-h-[90vh] max-w-[95vw] bg-default rounded-2xl shadow-2xl border border-default flex flex-col overflow-hidden relative"
+        class="fixed bottom-24 right-4 sm:right-6 z-50 w-[calc(100vw-2rem)] sm:w-auto h-[540px] sm:h-auto max-h-[90vh] max-w-[95vw] bg-default rounded-2xl shadow-2xl border border-default flex flex-col overflow-hidden"
         :class="{
-          'select-none': isResizing,
-          'transition-[width,height] duration-200 ease-out': !isResizing
+          'select-none transition-none': isResizing,
+          'transition-[width,height] duration-150 ease-out': !isResizing
         }"
         :style="drawerStyle"
         data-testid="chatbot-drawer"
       >
         <!-- Desktop Resize Handles -->
         <div
-          v-if="isDesktop"
-          class="hidden sm:flex absolute top-0 left-0 w-6 h-6 cursor-nwse-resize z-40 items-center justify-center group"
+          class="hidden sm:flex absolute top-0 left-0 w-8 h-8 cursor-nwse-resize z-50 items-center justify-center group touch-none select-none"
           title="Arrastra para redimensionar ventana"
           data-testid="chatbot-resize-top-left"
           @pointerdown="startResize('top-left', $event)"
         >
-          <div class="w-2.5 h-2.5 border-t-2 border-l-2 border-white/60 group-hover:border-white group-active:border-primary-200 rounded-tl-xs transition-colors" />
+          <div class="w-3.5 h-3.5 border-t-2 border-l-2 border-white/70 group-hover:border-white group-active:border-primary-200 transition-colors rounded-tl-xs" />
         </div>
 
         <div
-          v-if="isDesktop"
-          class="hidden sm:block absolute top-6 left-0 bottom-0 w-2.5 cursor-ew-resize z-30 group"
+          class="hidden sm:block absolute top-8 left-0 bottom-6 w-3.5 cursor-ew-resize z-50 group touch-none"
           title="Arrastra para cambiar el ancho"
           data-testid="chatbot-resize-left"
           @pointerdown="startResize('left', $event)"
         >
-          <div class="w-1 h-full bg-transparent group-hover:bg-primary-500/40 group-active:bg-primary-500/70 transition-colors" />
+          <div class="w-1 h-full bg-transparent group-hover:bg-primary-500/50 group-active:bg-primary-600 transition-colors" />
         </div>
 
         <div
-          v-if="isDesktop"
-          class="hidden sm:block absolute top-0 left-6 right-28 h-2.5 cursor-ns-resize z-30 group"
+          class="hidden sm:block absolute top-0 left-8 right-28 h-3.5 cursor-ns-resize z-50 group touch-none"
           title="Arrastra para cambiar el alto"
           data-testid="chatbot-resize-top"
           @pointerdown="startResize('top', $event)"
         >
-          <div class="h-1 w-full bg-transparent group-hover:bg-primary-500/40 group-active:bg-primary-500/70 transition-colors" />
+          <div class="h-1 w-full bg-transparent group-hover:bg-primary-500/50 group-active:bg-primary-600 transition-colors" />
+        </div>
+
+        <div
+          class="hidden sm:flex absolute bottom-0 left-0 w-7 h-7 cursor-ew-resize z-50 items-center justify-center group touch-none select-none"
+          title="Arrastra para cambiar el ancho"
+          data-testid="chatbot-resize-bottom-left"
+          @pointerdown="startResize('left', $event)"
+        >
+          <div class="w-2.5 h-2.5 border-b-2 border-l-2 border-default group-hover:border-primary-500 transition-colors rounded-bl-xs" />
         </div>
 
         <!-- Header: Sobria cabecera morada con icono sparkles y controles limpios -->

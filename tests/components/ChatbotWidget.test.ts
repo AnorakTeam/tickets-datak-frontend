@@ -297,6 +297,7 @@ describe('ChatbotWidget.vue (FE-10 / RF3, RF6)', () => {
     expect(wrapper.find('[data-testid="chatbot-resize-top-left"]').exists()).toBe(true)
     expect(wrapper.find('[data-testid="chatbot-resize-left"]').exists()).toBe(true)
     expect(wrapper.find('[data-testid="chatbot-resize-top"]').exists()).toBe(true)
+    expect(wrapper.find('[data-testid="chatbot-resize-bottom-left"]').exists()).toBe(true)
 
     // Verify maximize button
     const maxBtn = wrapper.find('[data-testid="chatbot-maximize-btn"]')
@@ -318,6 +319,20 @@ describe('ChatbotWidget.vue (FE-10 / RF3, RF6)', () => {
     expect(wrapper.vm.isMaximized).toBe(false)
     expect(wrapper.vm.width).toBe(initialWidth)
     expect(wrapper.vm.height).toBe(initialHeight)
+
+    // Test dragging left handle to resize width
+    const leftHandle = wrapper.find('[data-testid="chatbot-resize-left"]')
+    await leftHandle.trigger('pointerdown', { clientX: 500, clientY: 500 })
+    window.dispatchEvent(new PointerEvent('pointermove', { clientX: 400, clientY: 500 }))
+    expect(wrapper.vm.width).toBe(initialWidth + 100)
+    window.dispatchEvent(new PointerEvent('pointerup'))
+
+    // Test dragging top handle to resize height
+    const topHandle = wrapper.find('[data-testid="chatbot-resize-top"]')
+    await topHandle.trigger('pointerdown', { clientX: 500, clientY: 500 })
+    window.dispatchEvent(new PointerEvent('pointermove', { clientX: 500, clientY: 460 }))
+    expect(wrapper.vm.height).toBe(initialHeight + 40)
+    window.dispatchEvent(new PointerEvent('pointerup'))
   })
 
   it('renders radicado confirmation card with one-click copy button on ticket creation (FE-11)', async () => {

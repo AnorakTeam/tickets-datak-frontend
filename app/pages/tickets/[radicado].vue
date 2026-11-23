@@ -240,8 +240,8 @@ watch(
           <!-- Quick copy widget -->
           <div class="flex items-center gap-2.5 self-start rounded-lg border border-default bg-muted px-3 py-2">
             <div class="text-xs">
-              <span class="block text-[10px] font-semibold uppercase tracking-wider text-muted">Radicado</span>
-              <span class="font-mono font-bold tabular-nums text-highlighted text-xs sm:text-sm">{{ ticket.radicado }}</span>
+              <span class="block text-xs font-medium uppercase tracking-wider text-default dark:text-muted">Radicado</span>
+              <span class="font-mono font-semibold tabular-nums text-highlighted text-xs sm:text-sm">{{ ticket.radicado }}</span>
             </div>
             <button
               type="button"

@@ -71,8 +71,8 @@ const handleCopy = async () => {
     <!-- Radicado Display with Copy Button -->
     <div class="bg-muted border border-default rounded-lg p-2.5 flex items-center justify-between gap-2 shadow-xs">
       <div>
-        <span class="block text-[10px] uppercase font-semibold text-muted">Radicado Oficial</span>
-        <span class="font-mono text-base font-bold tabular-nums text-primary-600 dark:text-primary-400 tracking-wider select-all" data-testid="chatbot-radicado-number">
+        <span class="block text-xs uppercase font-medium text-default dark:text-muted">Radicado Oficial</span>
+        <span class="font-mono text-base font-semibold tabular-nums text-primary-600 dark:text-primary-400 tracking-wider select-all" data-testid="chatbot-radicado-number">
           {{ radicado }}
         </span>
       </div>

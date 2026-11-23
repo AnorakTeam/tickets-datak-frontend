@@ -106,7 +106,7 @@ onBeforeUnmount(() => {
       <!-- Unread Badge -->
       <span
         v-if="unreadCount > 0"
-        class="absolute -top-1 -right-1 flex h-4 min-w-[1rem] items-center justify-center rounded-full bg-red-600 px-1 text-[10px] font-bold text-white shadow-sm ring-2 ring-default"
+        class="absolute -top-1 -right-1 flex h-4 min-w-[1rem] items-center justify-center rounded-full bg-red-600 px-1 text-xs font-semibold tabular-nums text-white shadow-sm ring-2 ring-default"
         aria-hidden="true"
       >
         {{ unreadCount > 9 ? '9+' : unreadCount }}
@@ -138,12 +138,12 @@ onBeforeUnmount(() => {
         <!-- Panel Header -->
         <div class="flex items-center justify-between border-b border-default px-4 py-3 bg-muted/60">
           <div class="flex items-center gap-2">
-            <h3 class="text-xs font-bold uppercase tracking-wider text-highlighted">
+            <h3 class="text-xs font-semibold uppercase tracking-wider text-highlighted">
               Notificaciones
             </h3>
             <span
               v-if="unreadCount > 0"
-              class="rounded-full bg-primary-50 dark:bg-primary-950/40 border border-primary-200 dark:border-primary-800 px-2 py-0.5 text-[10px] font-semibold text-primary-700 dark:text-primary-300"
+              class="rounded-full bg-primary-50 dark:bg-primary-950/40 border border-primary-200 dark:border-primary-800 px-2 py-0.5 text-xs font-medium text-primary-700 dark:text-primary-300 tabular-nums"
             >
               {{ unreadCount }} {{ unreadCount === 1 ? 'nueva' : 'nuevas' }}
             </span>

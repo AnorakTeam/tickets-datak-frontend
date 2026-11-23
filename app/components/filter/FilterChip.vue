@@ -6,7 +6,7 @@
     class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-full border transition-all cursor-pointer select-none"
     :class="active
       ? 'bg-primary-50 border-primary-300 text-primary-700 dark:bg-primary-950/40 dark:border-primary-800 dark:text-primary-300 font-semibold shadow-2xs'
-      : 'bg-default border-default text-muted hover:border-accented hover:text-highlighted'"
+      : 'bg-default border-default text-default hover:border-accented hover:text-highlighted'"
     :disabled="disabled"
     @click="$emit('click')"
   >

@@ -313,7 +313,7 @@ defineExpose({
             </div>
 
             <!-- Timestamp -->
-            <span class="text-[10px] text-muted mt-1 px-1 tabular-nums">
+            <span class="text-xs text-muted mt-1 px-1 tabular-nums">
               {{ formatTime(msg.timestamp) }}
             </span>
           </div>
@@ -325,9 +325,9 @@ defineExpose({
             data-testid="typing-indicator"
           >
             <div class="flex space-x-1">
-              <span class="w-2 h-2 bg-primary-500 rounded-full animate-bounce [animation-delay:-0.3s]" />
-              <span class="w-2 h-2 bg-primary-500 rounded-full animate-bounce [animation-delay:-0.15s]" />
-              <span class="w-2 h-2 bg-primary-500 rounded-full animate-bounce" />
+              <span class="w-1.5 h-1.5 bg-primary-500 rounded-full animate-pulse [animation-delay:-0.3s]" />
+              <span class="w-1.5 h-1.5 bg-primary-500 rounded-full animate-pulse [animation-delay:-0.15s]" />
+              <span class="w-1.5 h-1.5 bg-primary-500 rounded-full animate-pulse" />
             </div>
             <span class="text-muted font-medium">Escribiendo respuesta...</span>
           </div>

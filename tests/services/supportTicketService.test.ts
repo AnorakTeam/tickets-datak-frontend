@@ -57,10 +57,20 @@ describe('supportTicketService', () => {
     })
   })
 
-  it('calls GET /support/empresas/ to fetch tenant company list', async () => {
+  it('calls GET /support/empresas/ to fetch tenant company list with modules', async () => {
     const mockEmpresas = [
-      { id: 1, nombre: 'Empresa Alpha', activa: true },
-      { id: 2, nombre: 'Empresa Beta', activa: true },
+      {
+        id: 1,
+        nombre: 'Empresa Alpha',
+        activa: true,
+        modulos_contratados: [{ id: 1, codigo: 'MOD-INV', nombre: 'Inventarios' }],
+      },
+      {
+        id: 2,
+        nombre: 'Empresa Beta',
+        activa: true,
+        modulos: [{ id: 2, codigo: 'MOD-FAC', nombre: 'Facturación' }],
+      },
     ]
     vi.mocked(apiService.get).mockResolvedValue(mockEmpresas)
 
@@ -68,19 +78,6 @@ describe('supportTicketService', () => {
 
     expect(apiService.get).toHaveBeenCalledWith('/support/empresas/')
     expect(result).toEqual(mockEmpresas)
-  })
-
-  it('fetches company contracted modules via GET /support/empresas/{id}/modulos/', async () => {
-    const mockModules = [
-      { id: 1, codigo: 'MOD-INV', nombre: 'Inventarios' },
-      { id: 2, codigo: 'MOD-FAC', nombre: 'Facturación' },
-    ]
-    vi.mocked(apiService.get).mockResolvedValueOnce(mockModules)
-
-    const result = await supportTicketService.getCompanyModules(5)
-
-    expect(apiService.get).toHaveBeenCalledWith('/support/empresas/5/modulos/')
-    expect(result).toEqual(mockModules)
   })
 
   it('submits external ticket payload via POST /support/tickets/', async () => {

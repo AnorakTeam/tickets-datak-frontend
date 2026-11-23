@@ -6,6 +6,8 @@ export interface SupportEmpresa {
   nombre: string
   identificacion?: string
   activa?: boolean
+  modulos_contratados?: CompanyModule[]
+  modulos?: CompanyModule[]
 }
 
 export interface SupportResponsable {
@@ -111,16 +113,6 @@ export interface CreateExternalTicketResponse {
   mensaje?: string
 }
 
-export const getCompanyModules = async (empresaId: number): Promise<CompanyModule[]> => {
-  try {
-    return await apiService.get<CompanyModule[]>(`/support/empresas/${empresaId}/modulos/`)
-  } catch {
-    return await apiService.get<CompanyModule[]>('/modulos/', {
-      params: { empresa: empresaId },
-    })
-  }
-}
-
 export const createExternalTicket = async (
   payload: CreateExternalTicketPayload,
 ): Promise<CreateExternalTicketResponse> => {
@@ -130,7 +122,6 @@ export const createExternalTicket = async (
 export const supportTicketService = {
   listSupportTickets,
   getSupportEmpresas,
-  getCompanyModules,
   createExternalTicket,
 }
 

@@ -49,7 +49,7 @@ const initializeChat = () => {
     {
       id: 'welcome-msg',
       sender: 'bot',
-      text: '¡Hola! 👋 Soy tu asistente virtual de Tickets Datak. Puedo orientarte para reportar incidencias en tus módulos contratados o consultar el estado de tu ticket mediante su número de radicado.',
+      text: '¡Hola! Soy tu asistente virtual de Tickets Datak. Puedo orientarte para reportar incidencias en tus módulos contratados o consultar el estado de tu ticket mediante su número de radicado.',
       timestamp: new Date(),
       type: 'INFO',
     },
@@ -161,18 +161,18 @@ defineExpose({
 
 <template>
   <div class="chatbot-widget-container">
-    <!-- Floating Action Button (FAB) -->
+    <!-- Floating Action Button (FAB) in Datak purple with i-lucide-messages-square -->
     <div class="fixed bottom-6 right-6 z-50">
       <button
         type="button"
-        class="w-14 h-14 rounded-full bg-blue-600 hover:bg-blue-700 text-white shadow-xl hover:shadow-2xl flex items-center justify-center transition-all duration-300 transform hover:scale-105 focus:outline-none focus:ring-4 focus:ring-blue-300 active:scale-95"
+        class="w-14 h-14 rounded-full bg-primary-600 hover:bg-primary-700 text-white shadow-xl hover:shadow-2xl flex items-center justify-center transition-all duration-300 transform hover:scale-105 focus:outline-none focus:ring-4 focus:ring-primary-100 dark:focus:ring-primary-900 active:scale-95"
         :aria-label="isOpen ? 'Cerrar asistente virtual' : 'Abrir asistente virtual'"
         data-testid="chatbot-toggle-btn"
         @click="toggleOpen"
       >
         <UIcon
-          :name="isOpen ? 'i-heroicons-x-mark' : 'i-heroicons-chat-bubble-left-right'"
-          class="w-7 h-7 text-white transition-transform duration-200"
+          :name="isOpen ? 'i-lucide-x' : 'i-lucide-messages-square'"
+          class="w-6 h-6 text-white transition-transform duration-200"
         />
         <!-- Pulse ping badge when closed -->
         <span
@@ -196,22 +196,22 @@ defineExpose({
     >
       <div
         v-if="isOpen"
-        class="fixed bottom-24 right-4 sm:right-6 z-50 w-[calc(100vw-2rem)] sm:w-96 h-[540px] max-h-[85vh] bg-white rounded-2xl shadow-2xl border border-slate-200 flex flex-col overflow-hidden"
+        class="fixed bottom-24 right-4 sm:right-6 z-50 w-[calc(100vw-2rem)] sm:w-96 h-[540px] max-h-[85vh] bg-default rounded-2xl shadow-xl border border-default flex flex-col overflow-hidden"
         data-testid="chatbot-drawer"
       >
-        <!-- Header -->
-        <header class="bg-gradient-to-r from-blue-600 to-indigo-700 text-white px-4 py-3 flex items-center justify-between shrink-0 shadow-sm">
-          <div class="flex items-center space-x-3">
-            <div class="w-9 h-9 rounded-full bg-white/20 flex items-center justify-center shrink-0">
-              <UIcon name="i-heroicons-sparkles" class="w-5 h-5 text-yellow-300" />
+        <!-- Header: Sobria cabecera morada con icono sparkles y controles limpios -->
+        <header class="bg-primary-600 dark:bg-primary-700 text-white px-4 py-3 flex items-center justify-between shrink-0 shadow-xs">
+          <div class="flex items-center space-x-2.5 min-w-0">
+            <div class="w-8 h-8 rounded-full bg-white/15 flex items-center justify-center shrink-0">
+              <UIcon name="i-lucide-sparkles" class="w-4 h-4 text-white" />
             </div>
-            <div>
-              <h3 class="text-sm font-bold tracking-tight leading-tight">
+            <div class="min-w-0">
+              <h3 class="text-sm font-semibold tracking-tight leading-tight truncate">
                 Asistente Virtual Datak
               </h3>
               <div class="flex items-center space-x-1.5 mt-0.5">
-                <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-                <span class="text-xs text-blue-100 font-medium">En línea · Soporte 24/7</span>
+                <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                <span class="text-[11px] text-white/80 font-medium">En línea · Soporte 24/7</span>
               </div>
             </div>
           </div>
@@ -219,21 +219,21 @@ defineExpose({
           <div class="flex items-center space-x-1">
             <button
               type="button"
-              class="p-1.5 rounded-lg text-white/80 hover:text-white hover:bg-white/10 transition-colors"
+              class="p-1.5 rounded-lg text-white/80 hover:text-white hover:bg-white/15 transition-colors"
               title="Reiniciar conversación"
               data-testid="chatbot-reset-btn"
               @click="resetChat"
             >
-              <UIcon name="i-heroicons-arrow-path" class="w-4 h-4" />
+              <UIcon name="i-lucide-rotate-ccw" class="w-4 h-4" />
             </button>
             <button
               type="button"
-              class="p-1.5 rounded-lg text-white/80 hover:text-white hover:bg-white/10 transition-colors"
+              class="p-1.5 rounded-lg text-white/80 hover:text-white hover:bg-white/15 transition-colors"
               title="Cerrar asistente"
               data-testid="chatbot-close-btn"
               @click="toggleOpen"
             >
-              <UIcon name="i-heroicons-x-mark" class="w-5 h-5" />
+              <UIcon name="i-lucide-x" class="w-4 h-4" />
             </button>
           </div>
         </header>
@@ -241,7 +241,7 @@ defineExpose({
         <!-- Message History Container -->
         <div
           ref="messagesContainer"
-          class="flex-1 overflow-y-auto p-4 space-y-3.5 bg-slate-50/50"
+          class="flex-1 overflow-y-auto p-4 space-y-3.5 bg-page"
           data-testid="chatbot-messages-container"
         >
           <!-- Message Bubbles -->
@@ -257,13 +257,13 @@ defineExpose({
             <!-- Bubble wrapper -->
             <div
               :class="[
-                'p-3 text-sm rounded-2xl shadow-sm break-words',
+                'p-3 text-sm rounded-2xl shadow-xs break-words leading-relaxed',
                 msg.sender === 'user'
-                  ? 'bg-blue-600 text-white rounded-tr-none max-w-[82%]'
-                  : 'bg-white border border-slate-200 text-slate-800 rounded-tl-none max-w-[88%]'
+                  ? 'bg-primary-600 text-white rounded-tr-xs max-w-[85%]'
+                  : 'bg-muted border border-default text-highlighted rounded-tl-xs max-w-[88%]'
               ]"
             >
-              <p class="whitespace-pre-line leading-relaxed">
+              <p class="whitespace-pre-line">
                 {{ msg.text }}
               </p>
 
@@ -294,17 +294,18 @@ defineExpose({
               <!-- Optional Status / Radicado Details Card -->
               <div
                 v-else-if="msg.radicado"
-                class="mt-2.5 pt-2 border-t border-slate-100 flex items-center justify-between gap-2"
+                class="mt-2.5 pt-2 border-t border-default flex items-center justify-between gap-2"
               >
                 <div class="text-xs">
-                  <span class="text-slate-500 font-medium">Radicado: </span>
-                  <span class="font-mono font-bold text-blue-700">{{ msg.radicado }}</span>
+                  <span class="text-muted font-medium">Radicado: </span>
+                  <span class="font-mono font-bold tabular-nums text-primary-600 dark:text-primary-400">{{ msg.radicado }}</span>
                 </div>
                 <UBadge
                   v-if="msg.data?.estado"
                   size="xs"
-                  color="blue"
+                  color="gray"
                   variant="subtle"
+                  class="rounded-md"
                 >
                   {{ msg.data.estado }}
                 </UBadge>
@@ -312,7 +313,7 @@ defineExpose({
             </div>
 
             <!-- Timestamp -->
-            <span class="text-[10px] text-slate-400 mt-1 px-1">
+            <span class="text-[10px] text-muted mt-1 px-1 tabular-nums">
               {{ formatTime(msg.timestamp) }}
             </span>
           </div>
@@ -320,58 +321,59 @@ defineExpose({
           <!-- Typing Indicator -->
           <div
             v-if="isTyping"
-            class="flex items-center space-x-2 text-slate-400 text-xs py-1 px-2"
+            class="flex items-center space-x-2 text-muted text-xs py-1 px-2"
             data-testid="typing-indicator"
           >
             <div class="flex space-x-1">
-              <span class="w-2 h-2 bg-blue-500 rounded-full animate-bounce [animation-delay:-0.3s]" />
-              <span class="w-2 h-2 bg-blue-500 rounded-full animate-bounce [animation-delay:-0.15s]" />
-              <span class="w-2 h-2 bg-blue-500 rounded-full animate-bounce" />
+              <span class="w-2 h-2 bg-primary-500 rounded-full animate-bounce [animation-delay:-0.3s]" />
+              <span class="w-2 h-2 bg-primary-500 rounded-full animate-bounce [animation-delay:-0.15s]" />
+              <span class="w-2 h-2 bg-primary-500 rounded-full animate-bounce" />
             </div>
-            <span class="text-slate-500 font-medium">Escribiendo respuesta...</span>
+            <span class="text-muted font-medium">Escribiendo respuesta...</span>
           </div>
         </div>
 
         <!-- Quick Suggestions Chips (when few messages) -->
         <div
           v-if="messages.length <= 2"
-          class="px-4 py-2 bg-white border-t border-slate-100 flex flex-wrap gap-2 shrink-0"
+          class="px-3.5 py-2 bg-default border-t border-default flex flex-wrap gap-2 shrink-0"
         >
           <button
             type="button"
-            class="text-xs bg-blue-50 hover:bg-blue-100 text-blue-700 font-medium py-1 px-2.5 rounded-full border border-blue-200 transition-colors"
+            class="text-xs bg-muted hover:bg-default text-highlighted font-medium py-1 px-2.5 rounded-full border border-default transition-colors inline-flex items-center gap-1.5"
             @click="handleQuickChip('Quiero reportar un problema en un módulo')"
           >
-            🚨 Reportar un problema
+            <UIcon name="i-lucide-alert-circle" class="w-3.5 h-3.5 text-primary-500" />
+            <span>Reportar un problema</span>
           </button>
           <button
             type="button"
-            class="text-xs bg-slate-100 hover:bg-slate-200 text-slate-700 font-medium py-1 px-2.5 rounded-full border border-slate-200 transition-colors"
-            @click="handleQuickChip('Quiero consultar el estado de un radicado')"
-          >
-            🔍 Consultar radicado
+            class="text-xs bg-muted hover:bg-default text-highlighted font-medium py-1 px-2.5 rounded-full border border-default transition-colors inline-flex items-center gap-1.5"
+            @click="handleQuickChip('Quiero consultar el estado de un radicado')">
+            <UIcon name="i-lucide-search" class="w-3.5 h-3.5 text-muted" />
+            <span>Consultar radicado</span>
           </button>
         </div>
 
         <!-- Footer / Input Form -->
-        <footer class="p-3 bg-white border-t border-slate-200 shrink-0">
+        <footer class="p-2.5 bg-default border-t border-default shrink-0">
           <form class="flex items-center space-x-2" @submit.prevent="handleSend">
             <input
               v-model="inputMessage"
               type="text"
               placeholder="Escribe tu mensaje o radicado..."
-              class="flex-1 text-sm bg-slate-100 border-0 rounded-xl px-3.5 py-2.5 text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition-all"
+              class="flex-1 text-xs sm:text-sm bg-muted border border-default rounded-xl px-3.5 py-2 text-highlighted placeholder:text-muted focus:outline-none focus:ring-2 focus:ring-primary-100 focus:border-primary-400 focus:bg-default transition-all"
               :disabled="isTyping"
               data-testid="chatbot-input"
             />
             <button
               type="submit"
-              class="w-10 h-10 rounded-xl bg-blue-600 hover:bg-blue-700 disabled:opacity-40 disabled:cursor-not-allowed text-white flex items-center justify-center shrink-0 shadow-sm transition-colors"
+              class="w-9 h-9 rounded-xl bg-primary-600 hover:bg-primary-700 disabled:opacity-40 disabled:cursor-not-allowed text-white flex items-center justify-center shrink-0 shadow-xs transition-colors"
               :disabled="!inputMessage.trim() || isTyping"
               aria-label="Enviar mensaje"
               data-testid="chatbot-send-btn"
             >
-              <UIcon name="i-heroicons-paper-airplane" class="w-4 h-4 text-white" />
+              <UIcon name="i-lucide-send" class="w-4 h-4 text-white" />
             </button>
           </form>
         </footer>

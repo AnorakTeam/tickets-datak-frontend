@@ -273,8 +273,7 @@ onMounted(() => {
         <UIcon name="i-lucide-arrow-left" class="mr-1.5 h-3.5 w-3.5" />
         Volver a la bandeja de soporte
       </NuxtLink>
-      <p class="text-xs font-semibold uppercase tracking-wider text-amber-600 dark:text-amber-400">Consola de soporte</p>
-      <h1 class="mt-1 text-2xl font-bold tracking-tight text-highlighted sm:text-3xl">
+      <h1 class="text-2xl font-bold tracking-tight text-highlighted sm:text-3xl">
         Registrar ticket por canal externo
       </h1>
       <p class="mt-1 text-sm text-muted">

@@ -276,26 +276,20 @@ const handleSubmit = async () => {
 <template>
   <div class="max-w-2xl mx-auto space-y-5">
     <!-- Header / Navigation Back -->
-    <div class="flex items-center justify-between pb-3 border-b border-default">
-      <div>
-        <NuxtLink
-          to="/tickets"
-          class="inline-flex items-center text-xs font-medium text-muted hover:text-highlighted mb-1 transition-colors"
-        >
-          <UIcon name="i-lucide-arrow-left" class="w-3.5 h-3.5 mr-1" />
-          Volver a Mis tickets
-        </NuxtLink>
-        <h1 class="text-2xl font-bold tracking-tight text-highlighted">
-          Reportar Nueva Incidencia
-        </h1>
-        <p class="mt-0.5 text-xs text-muted">
-          Diligencie la información técnica para radicar un incidente con consecutivo oficial y notificación por correo.
-        </p>
-      </div>
-
-      <UBadge color="primary" variant="subtle" size="xs" class="hidden sm:inline-flex font-medium">
-        Portal del Cliente
-      </UBadge>
+    <div class="pb-3 border-b border-default">
+      <NuxtLink
+        to="/tickets"
+        class="inline-flex items-center text-xs font-medium text-muted hover:text-highlighted mb-1.5 transition-colors"
+      >
+        <UIcon name="i-lucide-arrow-left" class="w-3.5 h-3.5 mr-1" />
+        Volver a Mis tickets
+      </NuxtLink>
+      <h1 class="text-2xl font-bold tracking-tight text-highlighted">
+        Reportar Nueva Incidencia
+      </h1>
+      <p class="mt-0.5 text-xs text-muted">
+        Diligencie la información técnica para radicar un incidente con consecutivo oficial y notificación por correo.
+      </p>
     </div>
 
     <!-- Main Incident Form Card -->

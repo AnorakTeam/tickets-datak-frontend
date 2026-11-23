@@ -48,10 +48,10 @@ useHead({
 
     <!-- Quick Features Overview -->
     <div class="grid grid-cols-1 gap-5 md:grid-cols-3">
-      <div class="rounded-xl border border-default bg-default p-5 shadow-sm transition-all duration-200 ease-out hover:border-primary-500/30 hover:shadow-md">
+      <div class="rounded-xl border border-default bg-default p-5 shadow-xs transition-colors duration-150 hover:bg-muted/40">
         <div class="flex items-center gap-3">
-          <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-primary-500/10 text-primary-600 dark:text-primary-400">
-            <UIcon name="i-lucide-file-text" class="h-5 w-5" />
+          <div class="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-muted text-default">
+            <UIcon name="i-lucide-file-text" class="h-4.5 w-4.5 text-muted" />
           </div>
           <h2 class="text-sm font-semibold text-highlighted">Reporte guiado</h2>
         </div>
@@ -60,10 +60,10 @@ useHead({
         </p>
       </div>
 
-      <div class="rounded-xl border border-default bg-default p-5 shadow-sm transition-all duration-200 ease-out hover:border-primary-500/30 hover:shadow-md">
+      <div class="rounded-xl border border-default bg-default p-5 shadow-xs transition-colors duration-150 hover:bg-muted/40">
         <div class="flex items-center gap-3">
-          <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-amber-500/10 text-amber-600 dark:text-amber-400">
-            <UIcon name="i-lucide-messages-square" class="h-5 w-5" />
+          <div class="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-muted text-default">
+            <UIcon name="i-lucide-messages-square" class="h-4.5 w-4.5 text-muted" />
           </div>
           <h2 class="text-sm font-semibold text-highlighted">Asistente Datak</h2>
         </div>
@@ -72,10 +72,10 @@ useHead({
         </p>
       </div>
 
-      <div class="rounded-xl border border-default bg-default p-5 shadow-sm transition-all duration-200 ease-out hover:border-primary-500/30 hover:shadow-md">
+      <div class="rounded-xl border border-default bg-default p-5 shadow-xs transition-colors duration-150 hover:bg-muted/40">
         <div class="flex items-center gap-3">
-          <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
-            <UIcon name="i-lucide-shield-check" class="h-5 w-5" />
+          <div class="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-muted text-default">
+            <UIcon name="i-lucide-shield-check" class="h-4.5 w-4.5 text-muted" />
           </div>
           <h2 class="text-sm font-semibold text-highlighted">Aislamiento seguro</h2>
         </div>

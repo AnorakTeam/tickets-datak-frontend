@@ -58,13 +58,8 @@ const submit = async () => {
       <div class="rounded-xl border border-default bg-default p-6 shadow-sm sm:p-8">
         <!-- Datak Brand Header -->
         <div class="mb-6 flex flex-col items-center text-center">
-          <div class="flex items-center gap-2.5">
-            <div class="flex h-10 w-10 items-center justify-center rounded-xl bg-primary-600 text-lg font-bold text-white shadow-sm">
-              D
-            </div>
-            <span class="text-2xl font-bold tracking-tight text-highlighted">Datak</span>
-          </div>
-          <h1 class="mt-4 text-xl font-semibold tracking-tight text-highlighted">
+          <img src="/img/Datak.png" alt="Datak" class="h-10 w-auto mb-3" />
+          <h1 class="text-xl font-semibold tracking-tight text-highlighted">
             Iniciar sesión
           </h1>
           <p class="mt-1 text-xs leading-relaxed text-muted">
@@ -121,12 +116,6 @@ const submit = async () => {
             </UButton>
           </div>
         </form>
-
-        <div class="mt-6 border-t border-default pt-4 text-center">
-          <p class="text-xs text-muted">
-            Sistema de Gestión de Soporte · Datak ERP
-          </p>
-        </div>
       </div>
 
       <p class="mt-4 text-center text-xs leading-relaxed text-muted">

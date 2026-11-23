@@ -185,8 +185,7 @@ onMounted(async () => {
     <!-- Header Section -->
     <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
       <div>
-        <p class="text-xs font-semibold uppercase tracking-wider text-amber-600 dark:text-amber-400">Consola de soporte</p>
-        <h1 class="mt-1 text-2xl font-bold tracking-tight text-highlighted sm:text-3xl">
+        <h1 class="text-2xl font-bold tracking-tight text-highlighted sm:text-3xl">
           Bandeja unificada de soporte
         </h1>
         <p class="mt-0.5 text-xs text-muted">
@@ -505,7 +504,7 @@ onMounted(async () => {
           </span>
           <span
             v-else
-            class="inline-block rounded bg-amber-50 dark:bg-amber-950/40 px-1.5 py-0.5 text-[11px] font-medium text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-800"
+            class="inline-block rounded bg-muted px-1.5 py-0.5 text-[11px] font-medium text-muted border border-default"
           >
             Sin asignar
           </span>
@@ -562,7 +561,7 @@ onMounted(async () => {
         </div>
 
         <div class="mt-2.5">
-          <span class="text-xs font-medium text-amber-800 dark:text-amber-300 bg-amber-50 dark:bg-amber-950/40 px-2 py-0.5 rounded-md inline-block border border-amber-200 dark:border-amber-800">
+          <span class="text-xs font-medium text-default bg-muted px-2 py-0.5 rounded-md inline-block border border-default">
             {{ ticket.empresa?.nombre }}
           </span>
           <h2 class="mt-1 text-sm font-semibold text-highlighted">

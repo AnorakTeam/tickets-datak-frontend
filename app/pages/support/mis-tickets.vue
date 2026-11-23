@@ -176,10 +176,7 @@ onMounted(() => { void loadTickets() })
     <!-- Header with 2-weight hierarchy (semibold & normal only) -->
     <header class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
       <div>
-        <p class="text-xs font-semibold uppercase tracking-wider text-amber-600 dark:text-amber-400">
-          Consola de soporte · Cola de ingeniería
-        </p>
-        <h1 class="mt-1 text-2xl font-semibold tracking-tight text-highlighted sm:text-3xl">
+        <h1 class="text-2xl font-semibold tracking-tight text-highlighted sm:text-3xl">
           Mis tickets asignados
         </h1>
         <p class="mt-1 text-sm font-normal text-muted">

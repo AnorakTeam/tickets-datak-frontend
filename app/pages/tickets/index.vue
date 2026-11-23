@@ -108,8 +108,7 @@ onMounted(() => {
   <section class="space-y-5">
     <!-- Header: Título y contexto -->
     <div>
-      <p class="text-xs font-semibold uppercase tracking-wider text-primary-600">Portal del cliente</p>
-      <h1 class="mt-1 text-2xl font-bold tracking-tight text-highlighted sm:text-3xl">
+      <h1 class="text-2xl font-bold tracking-tight text-highlighted sm:text-3xl">
         Mis tickets
       </h1>
       <p class="mt-1 text-xs text-muted">

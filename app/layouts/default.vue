@@ -89,38 +89,36 @@ const breadcrumbLinks = computed(() => {
 
       <!-- TopBar content (exact 56px / h-14 height) -->
       <div class="mx-auto flex h-14 w-full max-w-7xl items-center justify-between gap-3 px-4 sm:px-6 lg:px-8">
-        <!-- Left: Logo, Breadcrumbs, Role/Company Badge -->
+        <!-- Left: Official Datak Logo & Clean Breadcrumbs -->
         <div class="flex min-w-0 items-center gap-3">
           <NuxtLink
             :to="isSupportStaff ? '/support/tickets' : '/'"
-            class="flex shrink-0 items-center gap-2.5 transition-opacity hover:opacity-90"
+            class="flex shrink-0 items-center gap-2 transition-opacity hover:opacity-90"
             aria-label="Ir al inicio"
           >
-            <div class="flex h-8 w-8 items-center justify-center rounded-lg bg-primary-600 text-sm font-bold text-white shadow-xs">
-              D
-            </div>
-            <span class="hidden text-base font-semibold tracking-tight text-highlighted sm:inline">
-              Tickets <span class="text-primary-600">Datak</span>
+            <img src="/img/DatakLogo.png" class="h-6 w-6 shrink-0" alt="Datak" />
+            <span class="text-sm font-semibold tracking-tight text-highlighted sm:text-base">
+              Tickets <span class="text-primary-600 font-medium">Datak</span>
             </span>
           </NuxtLink>
 
           <!-- Divider between Brand and Context -->
-          <div v-if="breadcrumbLinks.length > 0 || isSupportStaff || authStore.empresa" class="hidden h-4 w-px bg-slate-200 dark:bg-slate-700 lg:block" aria-hidden="true" />
+          <div v-if="breadcrumbLinks.length > 0" class="hidden xl:block h-4 w-px bg-slate-200 dark:bg-slate-700" aria-hidden="true" />
 
-          <!-- Neutral Breadcrumb (Desktop) -->
-          <nav v-if="breadcrumbLinks.length > 0" class="hidden min-w-0 items-center lg:flex" aria-label="Miga de pan">
+          <!-- Neutral Breadcrumb (Visible on xl screens to prevent header collisions) -->
+          <nav v-if="breadcrumbLinks.length > 0" class="hidden xl:flex min-w-0 items-center" aria-label="Miga de pan">
             <ol class="flex items-center gap-1.5 text-xs text-muted">
               <li v-for="(crumb, idx) in breadcrumbLinks" :key="crumb.label" class="flex items-center gap-1.5">
                 <NuxtLink
                   v-if="crumb.to && idx < breadcrumbLinks.length - 1"
                   :to="crumb.to"
-                  class="transition-colors hover:text-highlighted truncate max-w-[10rem]"
+                  class="transition-colors hover:text-highlighted truncate max-w-[9rem]"
                 >
                   {{ crumb.label }}
                 </NuxtLink>
                 <span
                   v-else
-                  class="font-medium text-highlighted truncate max-w-[12rem]"
+                  class="font-medium text-highlighted truncate max-w-[11rem]"
                   :class="{ 'tabular-nums': isRadicado(crumb.label) }"
                 >
                   {{ crumb.label }}
@@ -134,33 +132,31 @@ const breadcrumbLinks = computed(() => {
             </ol>
           </nav>
 
-          <!-- Support Badge for internal staff -->
+          <!-- Sober Context Badge (2xl only, avoids collision) -->
           <UBadge
             v-if="isSupportStaff"
-            color="amber"
+            color="gray"
             variant="subtle"
             size="xs"
-            class="hidden max-w-[14rem] truncate lg:inline-flex items-center gap-1.5 rounded-full border border-amber-200/80 dark:border-amber-800/80"
+            class="hidden 2xl:inline-flex max-w-[12rem] truncate items-center gap-1.5 rounded-full border border-default"
           >
-            <UIcon name="i-lucide-shield-check" class="h-3.5 w-3.5 text-amber-600 dark:text-amber-400 shrink-0" />
+            <UIcon name="i-lucide-shield-check" class="h-3.5 w-3.5 text-muted shrink-0" />
             <span class="truncate">{{ supportRoleLabel }}</span>
           </UBadge>
-
-          <!-- Client Company Badge -->
           <UBadge
             v-else-if="authStore.empresa"
-            color="primary"
+            color="gray"
             variant="subtle"
             size="xs"
-            class="hidden max-w-[14rem] truncate lg:inline-flex items-center gap-1.5 rounded-full border border-purple-200/80 dark:border-purple-800/80"
+            class="hidden 2xl:inline-flex max-w-[12rem] truncate items-center gap-1.5 rounded-full border border-default"
           >
-            <UIcon name="i-lucide-building-2" class="h-3.5 w-3.5 text-primary-600 dark:text-primary-400 shrink-0" />
+            <UIcon name="i-lucide-building-2" class="h-3.5 w-3.5 text-muted shrink-0" />
             <span class="truncate">{{ authStore.empresa.nombre }}</span>
           </UBadge>
         </div>
 
         <!-- Center/Right: Desktop Navigation -->
-        <nav class="hidden items-center gap-1.5 md:flex" aria-label="Navegación principal">
+        <nav class="hidden items-center gap-1 md:flex" aria-label="Navegación principal">
           <!-- Support Staff Links -->
           <template v-if="isSupportStaff">
             <UButton
@@ -168,7 +164,8 @@ const breadcrumbLinks = computed(() => {
               variant="ghost"
               color="gray"
               icon="i-lucide-inbox"
-              size="sm"
+              size="xs"
+              class="px-2.5 py-1.5 text-xs font-medium"
             >
               Bandeja de soporte
             </UButton>
@@ -177,7 +174,8 @@ const breadcrumbLinks = computed(() => {
               variant="ghost"
               color="gray"
               icon="i-lucide-plus-circle"
-              size="sm"
+              size="xs"
+              class="px-2.5 py-1.5 text-xs font-medium"
             >
               Registrar ticket
             </UButton>
@@ -186,7 +184,8 @@ const breadcrumbLinks = computed(() => {
               variant="ghost"
               color="gray"
               icon="i-lucide-user-check"
-              size="sm"
+              size="xs"
+              class="px-2.5 py-1.5 text-xs font-medium"
             >
               Mis asignados
             </UButton>
@@ -199,7 +198,8 @@ const breadcrumbLinks = computed(() => {
               variant="ghost"
               color="gray"
               icon="i-lucide-ticket"
-              size="sm"
+              size="xs"
+              class="px-2.5 py-1.5 text-xs font-medium"
             >
               Mis tickets
             </UButton>
@@ -208,7 +208,8 @@ const breadcrumbLinks = computed(() => {
               color="primary"
               variant="solid"
               icon="i-lucide-plus"
-              size="sm"
+              size="xs"
+              class="px-2.5 py-1.5 text-xs font-medium"
             >
               Reportar incidencia
             </UButton>
@@ -227,39 +228,28 @@ const breadcrumbLinks = computed(() => {
             <UButton
               color="gray"
               variant="ghost"
-              trailing-icon="i-lucide-chevron-down"
               aria-label="Abrir menú de usuario"
-              class="min-w-0 p-1 sm:px-2 rounded-lg"
+              class="min-w-0 p-1 rounded-full hover:bg-muted"
             >
               <span class="flex min-w-0 items-center gap-2">
                 <!-- Circular Avatar -->
-                <span class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary-100/70 dark:bg-primary-950/50 text-primary-700 dark:text-primary-300 font-semibold text-xs border border-primary-200/80 dark:border-primary-800/80">
+                <span class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary-100/80 dark:bg-primary-950/60 text-primary-700 dark:text-primary-300 font-semibold text-xs border border-primary-200/80 dark:border-primary-800/80">
                   <UIcon v-if="!userInitials" name="i-lucide-user" class="h-4 w-4" />
                   <span v-else>{{ userInitials }}</span>
                 </span>
-                <span class="hidden min-w-0 text-left sm:block">
-                  <span class="block max-w-[10rem] truncate text-xs font-medium text-highlighted">
+                <span class="hidden xl:block min-w-0 text-left">
+                  <span class="block max-w-[8rem] truncate text-xs font-medium text-highlighted">
                     {{ authStore.user?.nombre || (isSupportStaff ? 'Agente Soporte' : 'Cliente Datak') }}
                   </span>
-                  <span class="block max-w-[10rem] truncate text-[11px] font-normal text-muted tabular-nums">
+                  <span class="block max-w-[8rem] truncate text-[11px] font-normal text-muted tabular-nums">
                     {{ authStore.user?.correo }}
                   </span>
                 </span>
+                <UIcon name="i-lucide-chevron-down" class="hidden xl:block h-3.5 w-3.5 text-muted shrink-0" />
               </span>
             </UButton>
           </UDropdown>
         </div>
-      </div>
-
-      <!-- Mobile info banner for Client Company / Staff role -->
-      <div v-if="!isSupportStaff && authStore.empresa" class="border-t border-default bg-muted/40 px-4 py-1.5 text-xs text-muted lg:hidden flex items-center gap-1.5">
-        <UIcon name="i-lucide-building-2" class="h-3.5 w-3.5 text-primary-600 shrink-0" />
-        <span class="font-medium text-default">Empresa:</span>
-        <span class="truncate">{{ authStore.empresa.nombre }}</span>
-      </div>
-      <div v-else-if="isSupportStaff" class="border-t border-default bg-amber-50/60 dark:bg-amber-950/20 px-4 py-1.5 text-xs font-medium text-amber-700 dark:text-amber-400 lg:hidden flex items-center gap-1.5">
-        <UIcon name="i-lucide-shield-check" class="h-3.5 w-3.5 text-amber-600 shrink-0" />
-        <span class="truncate">{{ supportRoleLabel }}</span>
       </div>
 
       <!-- Mobile Navigation -->
@@ -319,11 +309,6 @@ const breadcrumbLinks = computed(() => {
     <main class="mx-auto w-full max-w-7xl flex-1 px-4 py-6 sm:px-6 sm:py-8 lg:px-8">
       <slot />
     </main>
-
-    <!-- Footer -->
-    <footer class="border-t border-default bg-default px-4 py-4 text-center text-xs text-muted">
-      Sistema de Gestión de Tickets de Soporte · Datak 2026
-    </footer>
 
     <!-- Floating Chatbot Assistant Widget (Only for clients, FE-10) -->
     <ChatbotWidget v-if="!isSupportStaff" />

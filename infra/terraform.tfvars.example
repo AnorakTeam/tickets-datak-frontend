@@ -1,0 +1,12 @@
+project_id             = "your-gcp-project-id"
+region                 = "us-central1"
+service_name           = "tickets-frontend"
+artifact_registry_repo = "tickets-datak-repo"
+frontend_image_tag     = "latest"
+
+# URL base del backend Cloud Run para el proxy Nitro en SSR (/api/core/* -> backend /api/v1/*)
+backend_api_url        = "https://tickets-backend-your-project-id-uc.a.run.app"
+
+# Autoscaling
+min_instances          = 0
+max_instances          = 3

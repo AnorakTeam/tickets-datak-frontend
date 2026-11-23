@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, reactive, watch } from 'vue'
 import { useRouter } from 'vue-router'
+import UFormField from '~/components/UFormField.vue'
 import ModuleSelect from '~/components/tickets/ModuleSelect.vue'
 import RadicadoModal from '~/components/tickets/RadicadoModal.vue'
 import { ticketService, type TicketPriority, type CreateTicketPayload } from '~/services/ticketService'
@@ -217,7 +218,7 @@ const handleSubmit = async () => {
       title: 'Operación no permitida',
       description: 'Su empresa no tiene módulos contratados activos para radicar incidencias.',
       color: 'amber',
-      icon: 'i-heroicons-exclamation-triangle',
+      icon: 'i-lucide-alert-triangle',
     })
     return
   }
@@ -227,7 +228,7 @@ const handleSubmit = async () => {
       title: 'Formulario incompleto',
       description: 'Por favor complete todos los campos obligatorios antes de continuar.',
       color: 'red',
-      icon: 'i-heroicons-exclamation-circle',
+      icon: 'i-lucide-alert-circle',
     })
     return
   }
@@ -256,7 +257,7 @@ const handleSubmit = async () => {
       title: '¡Incidencia radicada!',
       description: `Radicado generado exitosamente: ${response.radicado}`,
       color: 'green',
-      icon: 'i-heroicons-check-circle',
+      icon: 'i-lucide-check-circle',
     })
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : 'No fue posible registrar la incidencia en el servidor. Intente nuevamente.'
@@ -264,7 +265,7 @@ const handleSubmit = async () => {
       title: 'Error al radicar incidencia',
       description: message,
       color: 'red',
-      icon: 'i-heroicons-x-circle',
+      icon: 'i-lucide-x-circle',
     })
   } finally {
     isSubmitting.value = false
@@ -273,35 +274,44 @@ const handleSubmit = async () => {
 </script>
 
 <template>
-  <div class="max-w-4xl mx-auto space-y-6">
+  <div class="max-w-2xl mx-auto space-y-5">
     <!-- Header / Navigation Back -->
-    <div class="flex items-center justify-between pb-2 border-b border-slate-200">
+    <div class="flex items-center justify-between pb-3 border-b border-default">
       <div>
         <NuxtLink
-          to="/"
-          class="inline-flex items-center text-xs font-medium text-slate-500 hover:text-blue-600 mb-1"
+          to="/tickets"
+          class="inline-flex items-center text-xs font-medium text-muted hover:text-highlighted mb-1 transition-colors"
         >
-          <UIcon name="i-heroicons-arrow-left" class="w-3.5 h-3.5 mr-1" />
-          Volver al Inicio
+          <UIcon name="i-lucide-arrow-left" class="w-3.5 h-3.5 mr-1" />
+          Volver a Mis tickets
         </NuxtLink>
-        <h1 class="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">
+        <h1 class="text-2xl font-bold tracking-tight text-highlighted">
           Reportar Nueva Incidencia
         </h1>
-        <p class="mt-1 text-sm text-slate-600">
+        <p class="mt-0.5 text-xs text-muted">
           Diligencie la información técnica para radicar un incidente con consecutivo oficial y notificación por correo.
         </p>
       </div>
 
-      <UBadge color="primary" variant="subtle" size="sm" class="hidden sm:inline-flex">
+      <UBadge color="primary" variant="subtle" size="xs" class="hidden sm:inline-flex font-medium">
         Portal del Cliente
       </UBadge>
     </div>
 
     <!-- Main Incident Form Card -->
-    <UCard class="shadow-sm">
-      <form class="space-y-6" @submit.prevent="handleSubmit">
+    <UCard
+      class="bg-default border border-default rounded-xl shadow-xs"
+      :ui="{
+        background: 'bg-default',
+        ring: 'ring-1 ring-slate-200 dark:ring-slate-800',
+        rounded: 'rounded-xl',
+        shadow: 'shadow-xs',
+        body: { padding: 'p-6 sm:p-7' }
+      }"
+    >
+      <form class="space-y-4" @submit.prevent="handleSubmit">
         <!-- Module and Priority Grid -->
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
           <!-- Modulo Selector (FE-05 component) -->
           <ModuleSelect
             v-model="form.modulo_id"
@@ -316,7 +326,7 @@ const handleSubmit = async () => {
           />
 
           <!-- Priority Dropdown -->
-          <UFormGroup
+          <UFormField
             label="Nivel de prioridad estimado"
             :required="true"
             :error="errors.prioridad"
@@ -329,17 +339,18 @@ const handleSubmit = async () => {
               option-attribute="label"
               placeholder="Seleccione la prioridad..."
               :disabled="isSubmitting"
-              size="md"
+              size="sm"
               class="w-full"
+              :ui="{ base: 'h-9 focus:ring-2 focus:ring-primary-100 focus:border-primary-400' }"
             >
               <template #option="{ option }">
                 <div class="flex items-center justify-between w-full py-0.5">
-                  <span class="font-medium text-slate-800">{{ option.label }}</span>
-                  <span class="text-xs text-slate-500 ml-2">({{ option.description }})</span>
+                  <span class="font-medium text-highlighted">{{ option.label }}</span>
+                  <span class="text-xs text-muted ml-2">({{ option.description }})</span>
                 </div>
               </template>
             </USelectMenu>
-          </UFormGroup>
+          </UFormField>
         </div>
 
         <!-- Connection Error Banner if Module Fetch Failed -->
@@ -347,13 +358,13 @@ const handleSubmit = async () => {
           v-if="moduleLoadError"
           color="red"
           variant="soft"
-          icon="i-heroicons-exclamation-circle"
+          icon="i-lucide-alert-circle"
           title="Fallo de conexión con el catálogo de módulos"
           :description="`No se pudieron cargar los módulos contratados (${moduleLoadError}). Puede reintentar desde el botón del selector o verificar su conexión.`"
         />
 
         <!-- Screen / Document / Tab Input -->
-        <UFormGroup
+        <UFormField
           label="Pantalla, ventana o documento afectado"
           :required="true"
           :error="errors.pestana_o_documento"
@@ -363,15 +374,16 @@ const handleSubmit = async () => {
             v-model="form.pestana_o_documento"
             placeholder="Indique la pantalla o vista exacta donde se presentó el error"
             maxlength="255"
-            size="md"
-            icon="i-heroicons-window"
+            size="sm"
+            icon="i-lucide-monitor"
             :disabled="isSubmitting"
+            :ui="{ base: 'h-9 focus:ring-2 focus:ring-primary-100 focus:border-primary-400' }"
             @blur="validatePestana(true)"
           />
-        </UFormGroup>
+        </UFormField>
 
         <!-- Subject Input -->
-        <UFormGroup
+        <UFormField
           label="Asunto o resumen breve de la incidencia"
           :required="true"
           :error="errors.asunto"
@@ -381,15 +393,16 @@ const handleSubmit = async () => {
             v-model="form.asunto"
             placeholder="Ej: Error 500 al timbrar factura electrónica con retención en la fuente"
             maxlength="255"
-            size="md"
-            icon="i-heroicons-pencil-square"
+            size="sm"
+            icon="i-lucide-pencil"
             :disabled="isSubmitting"
+            :ui="{ base: 'h-9 focus:ring-2 focus:ring-primary-100 focus:border-primary-400' }"
             @blur="validateAsunto(true)"
           />
-        </UFormGroup>
+        </UFormField>
 
         <!-- Detailed Description Textarea -->
-        <UFormGroup
+        <UFormField
           label="Descripción detallada del problema"
           :required="true"
           :error="errors.descripcion"
@@ -398,14 +411,15 @@ const handleSubmit = async () => {
           <UTextarea
             v-model="form.descripcion"
             placeholder="Describa paso a paso cómo se presentó el problema..."
-            :rows="5"
+            :rows="4"
             :disabled="isSubmitting"
+            :ui="{ base: 'focus:ring-2 focus:ring-primary-100 focus:border-primary-400' }"
             @blur="validateDescripcion(true)"
           />
-        </UFormGroup>
+        </UFormField>
 
         <!-- System Error Message Textarea (Optional) -->
-        <UFormGroup
+        <UFormField
           label="Mensaje o código de error del sistema (Opcional)"
           help="Si el sistema arrojó un mensaje en pantalla, código o traza de error, péguelo aquí."
         >
@@ -415,26 +429,27 @@ const handleSubmit = async () => {
             :rows="3"
             class="font-mono text-xs"
             :disabled="isSubmitting"
+            :ui="{ base: 'focus:ring-2 focus:ring-primary-100 focus:border-primary-400' }"
           />
-        </UFormGroup>
+        </UFormField>
 
         <!-- Warning Alert ONLY if Company genuinely has no modules -->
         <UAlert
           v-if="hasNoModules"
           color="amber"
           variant="soft"
-          icon="i-heroicons-exclamation-triangle"
+          icon="i-lucide-alert-triangle"
           title="Atención: No puede radicar incidencias"
           description="Su empresa no registra módulos de software contratados activos. Contacte a soporte o administración para habilitar el servicio."
         />
 
         <!-- Action Buttons -->
-        <div class="flex flex-col-reverse sm:flex-row items-center justify-end gap-3 pt-4 border-t border-slate-200">
+        <div class="flex flex-col-reverse sm:flex-row items-center justify-end gap-3 pt-3 border-t border-default">
           <UButton
-            to="/"
-            variant="ghost"
+            to="/tickets"
+            variant="outline"
             color="gray"
-            size="md"
+            size="sm"
             class="w-full sm:w-auto"
             :disabled="isSubmitting"
           >
@@ -444,13 +459,14 @@ const handleSubmit = async () => {
           <UButton
             type="submit"
             color="primary"
-            size="md"
-            class="w-full sm:w-auto font-semibold shadow-sm"
-            icon="i-heroicons-paper-airplane"
+            variant="solid"
+            size="sm"
+            class="w-full sm:w-auto font-medium"
+            icon="i-lucide-send"
             :loading="isSubmitting"
             :disabled="isSubmitting || hasNoModules"
           >
-            Radicar Incidencia
+            Enviar reporte
           </UButton>
         </div>
       </form>

@@ -36,6 +36,16 @@ const globalStubs = {
       </div>
     `,
   },
+  UFormField: {
+    props: ['label', 'required', 'error', 'help'],
+    template: `
+      <div class="u-form-group" :data-label="label" :data-error="error">
+        <label v-if="label">{{ label }}</label>
+        <slot />
+        <span v-if="error" class="error-msg text-red-500">{{ error }}</span>
+      </div>
+    `,
+  },
   UInput: {
     props: ['modelValue', 'placeholder', 'disabled', 'maxlength', 'size', 'icon'],
     emits: ['update:modelValue', 'blur'],

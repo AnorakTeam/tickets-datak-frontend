@@ -95,11 +95,11 @@ defineExpose({
   >
     <!-- Loading State -->
     <div v-if="isLoading" class="space-y-2" data-testid="module-select-loading">
-      <div class="flex items-center space-x-2 text-xs text-slate-500">
-        <UIcon name="i-heroicons-arrow-path" class="w-4 h-4 animate-spin text-blue-600" />
+      <div class="flex items-center space-x-2 text-xs text-muted">
+        <UIcon name="i-lucide-loader-2" class="w-4 h-4 animate-spin text-primary-500" />
         <span>Cargando módulos contratados...</span>
       </div>
-      <USkeleton class="h-10 w-full rounded-lg" />
+      <USkeleton class="h-9 w-full rounded-lg" />
     </div>
 
     <!-- Error State (Network or server connection failure) -->
@@ -107,7 +107,7 @@ defineExpose({
       <UAlert
         color="red"
         variant="soft"
-        icon="i-heroicons-exclamation-circle"
+        icon="i-lucide-alert-circle"
         title="Error al cargar módulos"
         :description="fetchError"
       />
@@ -115,7 +115,7 @@ defineExpose({
         size="xs"
         color="gray"
         variant="outline"
-        icon="i-heroicons-arrow-path"
+        icon="i-lucide-refresh-cw"
         @click="fetchModules"
       >
         Reintentar carga
@@ -127,7 +127,7 @@ defineExpose({
       <UAlert
         color="amber"
         variant="soft"
-        icon="i-heroicons-exclamation-triangle"
+        icon="i-lucide-alert-triangle"
         title="Sin módulos contratados"
         description="Su empresa no cuenta actualmente con módulos de software activos disponibles para reportar incidentes. Por favor contacte al administrador de su cuenta."
       />
@@ -145,12 +145,13 @@ defineExpose({
         :placeholder="placeholder"
         :disabled="disabled"
         class="w-full"
-        size="md"
+        size="sm"
+        :ui="{ base: 'h-9 focus:ring-2 focus:ring-primary-100 focus:border-primary-400' }"
       >
         <template #option="{ option }">
           <div class="flex items-center justify-between w-full py-0.5">
-            <span class="text-sm font-medium text-slate-800">{{ option.nombre }}</span>
-            <UBadge size="xs" color="gray" variant="subtle" class="font-mono text-xs ml-2">
+            <span class="text-sm font-medium text-highlighted">{{ option.nombre }}</span>
+            <UBadge size="xs" color="gray" variant="subtle" class="font-mono text-xs ml-2 tabular-nums">
               {{ option.codigo }}
             </UBadge>
           </div>

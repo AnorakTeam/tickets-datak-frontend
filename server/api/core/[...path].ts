@@ -36,10 +36,12 @@ export const resolveAuthHeaders = (
 export default defineEventHandler(async (event) => {
   const config = useRuntimeConfig()
   const rawPath = event.context.params?.path || ''
+  const shouldHaveSlash = event.path ? event.path.split('?')[0].endsWith('/') : false
+  const pathForTarget = shouldHaveSlash && !rawPath.endsWith('/') ? `${rawPath}/` : rawPath
   const apiBaseUrl = (config.apiBaseUrl as string) || (config.public?.apiBaseUrl as string) || 'http://localhost:8000'
 
   const query = getQuery(event) as Record<string, unknown>
-  const targetUrl = resolveProxyTarget(apiBaseUrl, rawPath, query)
+  const targetUrl = resolveProxyTarget(apiBaseUrl, pathForTarget, query)
 
   const authHeader = getHeader(event, 'authorization')
   const tokenCookie = getCookie(event, 'auth_access_token') || getCookie(event, 'auth_token') || getCookie(event, 'access_token')

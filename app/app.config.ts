@@ -2,14 +2,6 @@ export default defineAppConfig({
   ui: {
     primary: 'purple',
     gray: 'slate',
-    colors: {
-      primary: 'purple',
-      neutral: 'slate',
-      success: 'emerald',
-      warning: 'amber',
-      error: 'red',
-      info: 'sky',
-    },
     notifications: {
       position: 'top-0 bottom-auto',
     },

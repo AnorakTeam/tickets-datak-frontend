@@ -397,4 +397,68 @@ describe('ChatbotWidget.vue (FE-10 / RF3, RF6)', () => {
     expect(wrapper.find('[data-testid="status-modulo"]').text()).toBe('Facturación Electrónica')
     expect(wrapper.find('[data-testid="view-ticket-detail-link"]').exists()).toBe(true)
   })
+
+  it('renders interactive active tickets card and allows selecting a ticket to query status without typing', async () => {
+    const mockActiveTicketsResponse: ChatbotMessageResponse = {
+      session_id: 'session-xyz',
+      tipo_respuesta: 'ESTADO_TICKET',
+      mensaje: 'Estos son tus tickets activos:',
+      campos_recolectados: {
+        tickets_activos: [
+          {
+            radicado: 'TK-2026-000001',
+            asunto: 'Error 500 al emitir factura',
+            modulo: 'Facturación Electrónica',
+            estado: 'En gestión',
+          },
+          {
+            radicado: 'TK-2026-000002',
+            asunto: 'Error en kardex',
+            modulo: 'Inventarios',
+            estado: 'Abierto',
+          },
+        ],
+      },
+      opciones: ['TK-2026-000001', 'TK-2026-000002'],
+    }
+
+    vi.spyOn(chatbotService, 'sendChatbotMessage').mockResolvedValue(mockActiveTicketsResponse)
+
+    const wrapper = mount(ChatbotWidget, {
+      props: { initialOpen: true },
+      global: { stubs: globalStubs },
+    })
+
+    await flushPromises()
+
+    const quickButtons = wrapper.findAll('button')
+    const consultChip = quickButtons.find((btn) => btn.text().includes('Consultar radicado'))
+    await consultChip!.trigger('click')
+    await flushPromises()
+
+    expect(wrapper.find('[data-testid="chatbot-active-tickets-card"]').exists()).toBe(true)
+    expect(wrapper.findAll('[data-testid="active-ticket-item"]').length).toBe(2)
+
+    // Select the first ticket directly from the card
+    vi.spyOn(chatbotService, 'sendChatbotMessage').mockResolvedValue({
+      session_id: 'session-xyz',
+      tipo_respuesta: 'ESTADO_TICKET',
+      radicado: 'TK-2026-000001',
+      datos: {
+        estado: 'En gestión',
+        asunto: 'Error 500 al emitir factura',
+      },
+      mensaje: 'Tu ticket TK-2026-000001 se encuentra En gestión.',
+    })
+
+    const ticketItem = wrapper.findAll('[data-testid="active-ticket-item"]')[0]
+    await ticketItem.trigger('click')
+    await flushPromises()
+
+    expect(chatbotService.sendChatbotMessage).toHaveBeenCalledWith(
+      expect.objectContaining({
+        mensaje: 'TK-2026-000001',
+      })
+    )
+  })
 })

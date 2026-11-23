@@ -26,6 +26,7 @@ export interface ChatbotMessageResponse {
     comentario_solucion?: string
   }
   campos_recolectados?: Record<string, any>
+  opciones?: string[]
 }
 
 export interface ChatMessage {
@@ -37,6 +38,7 @@ export interface ChatMessage {
   radicado?: string
   data?: Record<string, any>
   campos_recolectados?: Record<string, any>
+  opciones?: string[]
 }
 
 /**

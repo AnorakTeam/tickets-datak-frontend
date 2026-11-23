@@ -8,6 +8,7 @@ import {
 import ChatbotSummaryCard from '~/components/chatbot/ChatbotSummaryCard.vue'
 import ChatbotRadicadoCard from '~/components/chatbot/ChatbotRadicadoCard.vue'
 import ChatbotStatusCard from '~/components/chatbot/ChatbotStatusCard.vue'
+import ChatbotActiveTicketsCard from '~/components/chatbot/ChatbotActiveTicketsCard.vue'
 
 interface Props {
   initialOpen?: boolean
@@ -207,6 +208,7 @@ const sendMessageText = async (textToSend: string) => {
       radicado: res.radicado,
       data: res.datos,
       campos_recolectados: res.campos_recolectados,
+      opciones: res.opciones,
     }
     messages.value.push(botMsg)
 
@@ -438,9 +440,17 @@ defineExpose({
                 {{ msg.text }}
               </p>
 
+              <!-- Active Tickets Inquiry List (RF6 / FE-12 enhancement) -->
+              <ChatbotActiveTicketsCard
+                v-if="msg.campos_recolectados?.tickets_activos && msg.campos_recolectados.tickets_activos.length > 0"
+                :tickets="msg.campos_recolectados.tickets_activos"
+                :disabled="isTyping"
+                @select="sendMessageText"
+              />
+
               <!-- Radicado Confirmation Card (FE-11 / RF1, AGENTS.md Rule 4) -->
               <ChatbotRadicadoCard
-                v-if="msg.type === 'TICKET_CREADO' && msg.radicado"
+                v-else-if="msg.type === 'TICKET_CREADO' && msg.radicado"
                 :radicado="msg.radicado"
                 :mensaje="msg.text"
               />
@@ -480,6 +490,26 @@ defineExpose({
                 >
                   {{ msg.data.estado }}
                 </UBadge>
+              </div>
+
+              <!-- Interactive Quick Option Chips (e.g. module/priority choices or option pills) -->
+              <div
+                v-if="msg.opciones && msg.opciones.length > 0 && !msg.campos_recolectados?.tickets_activos"
+                class="mt-2.5 pt-2 border-t border-default flex flex-wrap gap-1.5"
+                data-testid="bot-options-container"
+              >
+                <button
+                  v-for="opt in msg.opciones"
+                  :key="opt"
+                  type="button"
+                  class="text-xs bg-default hover:bg-primary-50 text-highlighted hover:text-primary-700 hover:border-primary-300 dark:hover:bg-primary-950/40 dark:hover:text-primary-300 font-medium py-1 px-2.5 rounded-lg border border-default transition-all shadow-xs inline-flex items-center gap-1 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
+                  :disabled="isTyping"
+                  data-testid="bot-option-chip"
+                  @click="handleQuickChip(opt)"
+                >
+                  <UIcon name="i-lucide-check-circle" class="w-3.5 h-3.5 text-primary-500" />
+                  <span>{{ opt }}</span>
+                </button>
               </div>
             </div>
 

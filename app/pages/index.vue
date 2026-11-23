@@ -1,96 +1,88 @@
 <script setup lang="ts">
-import { useAuthStore } from '~/stores/auth'
-
-const authStore = useAuthStore()
-
 useHead({
-  title: 'Inicio — Sistema de Tickets',
+  title: 'Inicio — Tickets Datak',
 })
 </script>
 
 <template>
-  <div class="space-y-8">
-    <!-- Hero Greeting -->
-    <div class="bg-gradient-to-r from-blue-600 to-indigo-700 rounded-2xl p-8 text-white shadow-md">
+  <div class="space-y-6">
+    <!-- Hero Greeting Card -->
+    <div class="relative overflow-hidden rounded-xl border border-default bg-default p-6 shadow-sm sm:p-8">
+      <div class="absolute inset-x-0 top-0 h-0.5 bg-gradient-to-r from-amber-500 to-amber-600" />
       <div class="max-w-3xl">
-        <UBadge color="white" variant="solid" size="xs" class="mb-3 text-blue-700 font-semibold">
+        <UBadge color="gray" variant="subtle" size="xs" class="font-medium">
           Portal de Atención al Cliente
         </UBadge>
-        <h1 class="text-3xl font-extrabold sm:text-4xl tracking-tight">
+        <h1 class="mt-3 text-2xl font-semibold tracking-tight text-highlighted sm:text-3xl">
           Bienvenido al Sistema de Gestión de Tickets
         </h1>
-        <p class="mt-3 text-blue-100 text-base sm:text-lg leading-relaxed">
-          Reporta problemas o fallas técnicas en tus módulos contratados con radicado único, 
+        <p class="mt-2.5 max-w-2xl text-sm leading-relaxed text-muted">
+          Reporta problemas o incidencias técnicas en tus módulos contratados con radicado único,
           haz seguimiento en tiempo real y recibe atención oportuna con total trazabilidad.
         </p>
 
         <div class="mt-6 flex flex-wrap gap-3">
           <UButton
             to="/tickets/nuevo"
-            size="lg"
-            color="white"
+            size="md"
+            color="primary"
             variant="solid"
-            class="text-blue-700 font-semibold shadow-sm hover:bg-blue-50"
-            icon="i-heroicons-plus-circle"
+            icon="i-lucide-circle-plus"
+            class="transition-colors duration-150 ease-out"
           >
-            Reportar Nueva Incidencia
+            Reportar nueva incidencia
           </UButton>
           <UButton
             to="/tickets"
-            size="lg"
+            size="md"
+            color="gray"
             variant="outline"
-            class="text-white border-white/50 hover:bg-white/10"
-            icon="i-heroicons-queue-list"
+            icon="i-lucide-list"
+            class="transition-colors duration-150 ease-out"
           >
-            Consultar Mis Tickets
+            Consultar mis tickets
           </UButton>
         </div>
       </div>
     </div>
 
     <!-- Quick Features Overview -->
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-      <UCard>
-        <template #header>
-          <div class="flex items-center space-x-3">
-            <div class="p-2 rounded-lg bg-blue-50 text-blue-600">
-              <UIcon name="i-heroicons-document-text" class="w-6 h-6" />
-            </div>
-            <h3 class="font-bold text-slate-900">Reporte Guiado</h3>
+    <div class="grid grid-cols-1 gap-5 md:grid-cols-3">
+      <div class="rounded-xl border border-default bg-default p-5 shadow-xs transition-colors duration-150 hover:bg-muted/40">
+        <div class="flex items-center gap-3">
+          <div class="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-muted text-default">
+            <UIcon name="i-lucide-file-text" class="h-4.5 w-4.5 text-muted" />
           </div>
-        </template>
-        <p class="text-sm text-slate-600">
-          Diligencia el formulario indicando el módulo afectado, pantalla y mensaje de error para generar un número de radicado oficial.
+          <h2 class="text-sm font-semibold text-highlighted">Reporte guiado</h2>
+        </div>
+        <p class="mt-3 text-xs leading-relaxed text-muted">
+          Diligencia el formulario indicando el módulo contratado, pantalla y mensaje de error para generar un número de radicado oficial secuencial.
         </p>
-      </UCard>
+      </div>
 
-      <UCard>
-        <template #header>
-          <div class="flex items-center space-x-3">
-            <div class="p-2 rounded-lg bg-indigo-50 text-indigo-600">
-              <UIcon name="i-heroicons-chat-bubble-left-right" class="w-6 h-6" />
-            </div>
-            <h3 class="font-bold text-slate-900">Asistente Chatbot</h3>
+      <div class="rounded-xl border border-default bg-default p-5 shadow-xs transition-colors duration-150 hover:bg-muted/40">
+        <div class="flex items-center gap-3">
+          <div class="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-muted text-default">
+            <UIcon name="i-lucide-messages-square" class="h-4.5 w-4.5 text-muted" />
           </div>
-        </template>
-        <p class="text-sm text-slate-600">
-          Describe tu incidencia de manera natural con el asistente conversacional o consulta el estado actual de tu radicado en segundos.
+          <h2 class="text-sm font-semibold text-highlighted">Asistente Datak</h2>
+        </div>
+        <p class="mt-3 text-xs leading-relaxed text-muted">
+          Describe tu incidencia de manera natural con el asistente conversacional o consulta el estado actual de tu radicado en cualquier momento.
         </p>
-      </UCard>
+      </div>
 
-      <UCard>
-        <template #header>
-          <div class="flex items-center space-x-3">
-            <div class="p-2 rounded-lg bg-emerald-50 text-emerald-600">
-              <UIcon name="i-heroicons-shield-check" class="w-6 h-6" />
-            </div>
-            <h3 class="font-bold text-slate-900">Aislamiento Seguro</h3>
+      <div class="rounded-xl border border-default bg-default p-5 shadow-xs transition-colors duration-150 hover:bg-muted/40">
+        <div class="flex items-center gap-3">
+          <div class="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-muted text-default">
+            <UIcon name="i-lucide-shield-check" class="h-4.5 w-4.5 text-muted" />
           </div>
-        </template>
-        <p class="text-sm text-slate-600">
-          Acceso estrictamente restringido a los módulos y tickets de tu empresa, garantizando total confidencialidad e integridad.
+          <h2 class="text-sm font-semibold text-highlighted">Aislamiento seguro</h2>
+        </div>
+        <p class="mt-3 text-xs leading-relaxed text-muted">
+          Acceso estrictamente restringido a los módulos y tickets de tu empresa con confidencialidad absoluta en auditoría interna.
         </p>
-      </UCard>
+      </div>
     </div>
   </div>
 </template>

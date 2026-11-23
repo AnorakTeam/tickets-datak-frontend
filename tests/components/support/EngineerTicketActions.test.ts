@@ -25,6 +25,7 @@ const ticket = {
 
 const stubs = {
   UIcon: { template: '<i />' },
+  UBadge: { template: '<span><slot /></span>' },
   UCard: { template: '<div><slot name="header"/><slot/><slot name="footer"/></div>' },
   UModal: {
     props: ['modelValue'], emits: ['update:modelValue'],

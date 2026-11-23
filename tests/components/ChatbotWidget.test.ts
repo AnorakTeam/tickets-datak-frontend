@@ -234,9 +234,105 @@ describe('ChatbotWidget.vue (FE-10 / RF3, RF6)', () => {
 
     expect(chatbotService.sendChatbotMessage).toHaveBeenCalledWith(
       expect.objectContaining({
-        mensaje: 'Sí, confirmar y radicar ticket',
+        mensaje: 'confirmar',
       })
     )
+  })
+
+  it('handles cancellation from interactive summary card by sending cancelar', async () => {
+    const mockSummaryResponse: ChatbotMessageResponse = {
+      session_id: 'session-xyz',
+      tipo_respuesta: 'RESUMEN',
+      mensaje: 'Por favor revisa el resumen de tu reporte:',
+      campos_recolectados: {
+        modulo_nombre: 'Inventarios',
+        pantalla: 'Ajuste de Stock',
+        asunto: 'Error en kardex',
+        descripcion: 'Cantidades negativas.',
+      },
+    }
+
+    vi.spyOn(chatbotService, 'sendChatbotMessage').mockResolvedValue(mockSummaryResponse)
+
+    const wrapper = mount(ChatbotWidget, {
+      props: { initialOpen: true },
+      global: { stubs: globalStubs },
+    })
+
+    await flushPromises()
+
+    const input = wrapper.find('[data-testid="chatbot-input"]')
+    await input.setValue('Revisar datos')
+    await wrapper.find('form').trigger('submit.prevent')
+    await flushPromises()
+
+    const cancelBtn = wrapper.find('[data-testid="summary-cancel-btn"]')
+    expect(cancelBtn.exists()).toBe(true)
+
+    vi.spyOn(chatbotService, 'sendChatbotMessage').mockResolvedValue({
+      session_id: 'session-xyz',
+      tipo_respuesta: 'PREGUNTA',
+      mensaje: '¿Qué información deseas corregir?',
+    })
+
+    await cancelBtn.trigger('click')
+    await flushPromises()
+
+    expect(chatbotService.sendChatbotMessage).toHaveBeenCalledWith(
+      expect.objectContaining({
+        mensaje: 'cancelar',
+      })
+    )
+  })
+
+  it('supports maximizing, restoring, and provides desktop resize handles', async () => {
+    const wrapper = mount(ChatbotWidget, {
+      props: { initialOpen: true },
+      global: { stubs: globalStubs },
+    })
+
+    await flushPromises()
+
+    // Verify resize handles exist
+    expect(wrapper.find('[data-testid="chatbot-resize-top-left"]').exists()).toBe(true)
+    expect(wrapper.find('[data-testid="chatbot-resize-left"]').exists()).toBe(true)
+    expect(wrapper.find('[data-testid="chatbot-resize-top"]').exists()).toBe(true)
+    expect(wrapper.find('[data-testid="chatbot-resize-bottom-left"]').exists()).toBe(true)
+
+    // Verify maximize button
+    const maxBtn = wrapper.find('[data-testid="chatbot-maximize-btn"]')
+    expect(maxBtn.exists()).toBe(true)
+
+    // Initial state: not maximized
+    expect(wrapper.vm.isMaximized).toBe(false)
+    const initialWidth = wrapper.vm.width
+    const initialHeight = wrapper.vm.height
+
+    // Click maximize
+    await maxBtn.trigger('click')
+    expect(wrapper.vm.isMaximized).toBe(true)
+    expect(wrapper.vm.width).toBeGreaterThanOrEqual(initialWidth)
+    expect(wrapper.vm.height).toBeGreaterThanOrEqual(initialHeight)
+
+    // Click restore
+    await maxBtn.trigger('click')
+    expect(wrapper.vm.isMaximized).toBe(false)
+    expect(wrapper.vm.width).toBe(initialWidth)
+    expect(wrapper.vm.height).toBe(initialHeight)
+
+    // Test dragging left handle to resize width
+    const leftHandle = wrapper.find('[data-testid="chatbot-resize-left"]')
+    await leftHandle.trigger('pointerdown', { clientX: 500, clientY: 500 })
+    window.dispatchEvent(new PointerEvent('pointermove', { clientX: 400, clientY: 500 }))
+    expect(wrapper.vm.width).toBe(initialWidth + 100)
+    window.dispatchEvent(new PointerEvent('pointerup'))
+
+    // Test dragging top handle to resize height
+    const topHandle = wrapper.find('[data-testid="chatbot-resize-top"]')
+    await topHandle.trigger('pointerdown', { clientX: 500, clientY: 500 })
+    window.dispatchEvent(new PointerEvent('pointermove', { clientX: 500, clientY: 460 }))
+    expect(wrapper.vm.height).toBe(initialHeight + 40)
+    window.dispatchEvent(new PointerEvent('pointerup'))
   })
 
   it('renders radicado confirmation card with one-click copy button on ticket creation (FE-11)', async () => {
@@ -300,5 +396,69 @@ describe('ChatbotWidget.vue (FE-10 / RF3, RF6)', () => {
     expect(wrapper.find('[data-testid="status-asunto"]').text()).toBe('Error 500 al emitir factura')
     expect(wrapper.find('[data-testid="status-modulo"]').text()).toBe('Facturación Electrónica')
     expect(wrapper.find('[data-testid="view-ticket-detail-link"]').exists()).toBe(true)
+  })
+
+  it('renders interactive active tickets card and allows selecting a ticket to query status without typing', async () => {
+    const mockActiveTicketsResponse: ChatbotMessageResponse = {
+      session_id: 'session-xyz',
+      tipo_respuesta: 'ESTADO_TICKET',
+      mensaje: 'Estos son tus tickets activos:',
+      campos_recolectados: {
+        tickets_activos: [
+          {
+            radicado: 'TK-2026-000001',
+            asunto: 'Error 500 al emitir factura',
+            modulo: 'Facturación Electrónica',
+            estado: 'En gestión',
+          },
+          {
+            radicado: 'TK-2026-000002',
+            asunto: 'Error en kardex',
+            modulo: 'Inventarios',
+            estado: 'Abierto',
+          },
+        ],
+      },
+      opciones: ['TK-2026-000001', 'TK-2026-000002'],
+    }
+
+    vi.spyOn(chatbotService, 'sendChatbotMessage').mockResolvedValue(mockActiveTicketsResponse)
+
+    const wrapper = mount(ChatbotWidget, {
+      props: { initialOpen: true },
+      global: { stubs: globalStubs },
+    })
+
+    await flushPromises()
+
+    const quickButtons = wrapper.findAll('button')
+    const consultChip = quickButtons.find((btn) => btn.text().includes('Consultar radicado'))
+    await consultChip!.trigger('click')
+    await flushPromises()
+
+    expect(wrapper.find('[data-testid="chatbot-active-tickets-card"]').exists()).toBe(true)
+    expect(wrapper.findAll('[data-testid="active-ticket-item"]').length).toBe(2)
+
+    // Select the first ticket directly from the card
+    vi.spyOn(chatbotService, 'sendChatbotMessage').mockResolvedValue({
+      session_id: 'session-xyz',
+      tipo_respuesta: 'ESTADO_TICKET',
+      radicado: 'TK-2026-000001',
+      datos: {
+        estado: 'En gestión',
+        asunto: 'Error 500 al emitir factura',
+      },
+      mensaje: 'Tu ticket TK-2026-000001 se encuentra En gestión.',
+    })
+
+    const ticketItem = wrapper.findAll('[data-testid="active-ticket-item"]')[0]
+    await ticketItem.trigger('click')
+    await flushPromises()
+
+    expect(chatbotService.sendChatbotMessage).toHaveBeenCalledWith(
+      expect.objectContaining({
+        mensaje: 'TK-2026-000001',
+      })
+    )
   })
 })

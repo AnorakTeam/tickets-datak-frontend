@@ -20,53 +20,142 @@ const supportRoleLabel = computed(() => {
   return 'Soporte Datak'
 })
 
-const userMenuItems = computed(() => [[
-  {
-    label: 'Cerrar sesión',
-    icon: 'i-heroicons-arrow-right-on-rectangle',
-    click: () => authStore.logout(),
-  },
-]])
+const userInitials = computed(() => {
+  const name = authStore.user?.nombre?.trim()
+  if (!name) return ''
+  const parts = name.split(/\s+/).filter(Boolean)
+  if (parts.length >= 2) {
+    return (parts[0][0] + parts[1][0]).toUpperCase()
+  }
+  return name.slice(0, 2).toUpperCase()
+})
+
+const userMenuItems = computed(() => [
+  [
+    {
+      label: 'Cerrar sesión',
+      icon: 'i-lucide-log-out',
+      click: () => authStore.logout(),
+    },
+  ],
+])
+
+function isRadicado(text: string) {
+  return /^TK-\d{4}-\d{6}$/i.test(text)
+}
+
+const breadcrumbLinks = computed(() => {
+  const path = (typeof useRoute === 'function' ? useRoute()?.path : '') || ''
+  if (!path || path === '/' || path === '/login') return []
+
+  const links: Array<{ label: string; to?: string }> = []
+  if (path.startsWith('/support')) {
+    links.push({ label: 'Soporte', to: '/support/tickets' })
+    if (path === '/support/tickets') {
+      links.push({ label: 'Bandeja' })
+    } else if (path === '/support/tickets/nuevo') {
+      links.push({ label: 'Registrar ticket' })
+    } else if (path === '/support/mis-tickets') {
+      links.push({ label: 'Mis asignados' })
+    } else if (path.startsWith('/support/tickets/')) {
+      const parts = path.split('/')
+      const radicado = parts[parts.length - 1]
+      links.push({ label: 'Bandeja', to: '/support/tickets' })
+      links.push({ label: radicado })
+    }
+  } else {
+    links.push({ label: 'Portal', to: '/tickets' })
+    if (path === '/tickets') {
+      links.push({ label: 'Mis tickets' })
+    } else if (path === '/tickets/nuevo') {
+      links.push({ label: 'Reportar incidencia' })
+    } else if (path.startsWith('/tickets/')) {
+      const parts = path.split('/')
+      const radicado = parts[parts.length - 1]
+      links.push({ label: 'Mis tickets', to: '/tickets' })
+      links.push({ label: radicado })
+    }
+  }
+  return links
+})
 </script>
 
 <template>
-  <div class="flex min-h-screen flex-col bg-slate-50 text-slate-900">
-    <header class="sticky top-0 z-30 border-b border-slate-200 bg-white/95 backdrop-blur">
-      <div class="mx-auto flex h-16 w-full max-w-7xl items-center justify-between gap-3 px-4 sm:px-6 lg:px-8">
+  <div class="flex min-h-screen flex-col bg-page text-default font-sans">
+    <!-- TopBar with Datak 56px height, amber gradient stripe, and neutral borders -->
+    <header class="sticky top-0 z-30 bg-default border-b border-default shadow-xs">
+      <!-- Amber brand stripe (2px) -->
+      <div class="datak-brand-stripe" aria-hidden="true" />
+
+      <!-- TopBar content (exact 56px / h-14 height) -->
+      <div class="mx-auto flex h-14 w-full max-w-7xl items-center justify-between gap-3 px-4 sm:px-6 lg:px-8">
+        <!-- Left: Official Datak Logo & Clean Breadcrumbs -->
         <div class="flex min-w-0 items-center gap-3">
-          <NuxtLink :to="isSupportStaff ? '/support/tickets' : '/'" class="flex shrink-0 items-center gap-2" aria-label="Ir al inicio">
-            <div class="flex h-9 w-9 items-center justify-center rounded-xl bg-primary-600 text-lg font-bold text-white shadow-sm">
-              D
-            </div>
-            <span class="hidden text-lg font-bold tracking-tight text-slate-950 sm:inline">
-              Tickets <span class="text-primary-600">Datak</span>
+          <NuxtLink
+            :to="isSupportStaff ? '/support/tickets' : '/'"
+            class="flex shrink-0 items-center gap-2 transition-opacity hover:opacity-90"
+            aria-label="Ir al inicio"
+          >
+            <img :src="'/img/DatakLogo.png'" class="h-6 w-6 shrink-0" alt="Datak" />
+            <span class="text-sm font-semibold tracking-tight text-highlighted sm:text-base">
+              Tickets <span class="text-primary-600 font-medium">Datak</span>
             </span>
           </NuxtLink>
 
-          <!-- Support Badge for internal staff -->
+          <!-- Divider between Brand and Context -->
+          <div v-if="breadcrumbLinks.length > 0" class="hidden xl:block h-4 w-px bg-slate-200 dark:bg-slate-700" aria-hidden="true" />
+
+          <!-- Neutral Breadcrumb (Visible on xl screens to prevent header collisions) -->
+          <nav v-if="breadcrumbLinks.length > 0" class="hidden xl:flex min-w-0 items-center" aria-label="Miga de pan">
+            <ol class="flex items-center gap-1.5 text-xs text-muted">
+              <li v-for="(crumb, idx) in breadcrumbLinks" :key="crumb.label" class="flex items-center gap-1.5">
+                <NuxtLink
+                  v-if="crumb.to && idx < breadcrumbLinks.length - 1"
+                  :to="crumb.to"
+                  class="transition-colors hover:text-highlighted truncate max-w-[9rem]"
+                >
+                  {{ crumb.label }}
+                </NuxtLink>
+                <span
+                  v-else
+                  class="font-medium text-highlighted truncate max-w-[11rem]"
+                  :class="{ 'tabular-nums': isRadicado(crumb.label) }"
+                >
+                  {{ crumb.label }}
+                </span>
+                <UIcon
+                  v-if="idx < breadcrumbLinks.length - 1"
+                  name="i-lucide-chevron-right"
+                  class="h-3.5 w-3.5 text-dimmed shrink-0"
+                />
+              </li>
+            </ol>
+          </nav>
+
+          <!-- Sober Context Badge (2xl only, avoids collision) -->
           <UBadge
             v-if="isSupportStaff"
-            color="amber"
+            color="gray"
             variant="subtle"
-            size="sm"
-            class="hidden max-w-[14rem] truncate lg:inline-flex"
+            size="xs"
+            class="hidden 2xl:inline-flex max-w-[12rem] truncate items-center gap-1.5 rounded-full border border-default"
           >
-            {{ supportRoleLabel }}
+            <UIcon name="i-lucide-shield-check" class="h-3.5 w-3.5 text-muted shrink-0" />
+            <span class="truncate">{{ supportRoleLabel }}</span>
           </UBadge>
-
-          <!-- Client Company Badge -->
           <UBadge
             v-else-if="authStore.empresa"
-            color="primary"
+            color="gray"
             variant="subtle"
-            size="sm"
-            class="hidden max-w-[12rem] truncate lg:inline-flex"
+            size="xs"
+            class="hidden 2xl:inline-flex max-w-[12rem] truncate items-center gap-1.5 rounded-full border border-default"
           >
-            {{ authStore.empresa.nombre }}
+            <UIcon name="i-lucide-building-2" class="h-3.5 w-3.5 text-muted shrink-0" />
+            <span class="truncate">{{ authStore.empresa.nombre }}</span>
           </UBadge>
         </div>
 
-        <!-- Desktop Navigation -->
+        <!-- Center/Right: Desktop Navigation -->
         <nav class="hidden items-center gap-1 md:flex" aria-label="Navegación principal">
           <!-- Support Staff Links -->
           <template v-if="isSupportStaff">
@@ -74,7 +163,9 @@ const userMenuItems = computed(() => [[
               to="/support/tickets"
               variant="ghost"
               color="gray"
-              icon="i-heroicons-inbox-stack"
+              icon="i-lucide-inbox"
+              size="xs"
+              class="px-2.5 py-1.5 text-xs font-medium"
             >
               Bandeja de soporte
             </UButton>
@@ -82,7 +173,9 @@ const userMenuItems = computed(() => [[
               to="/support/tickets/nuevo"
               variant="ghost"
               color="gray"
-              icon="i-heroicons-plus-circle"
+              icon="i-lucide-plus-circle"
+              size="xs"
+              class="px-2.5 py-1.5 text-xs font-medium"
             >
               Registrar ticket
             </UButton>
@@ -90,7 +183,9 @@ const userMenuItems = computed(() => [[
               to="/support/mis-tickets"
               variant="ghost"
               color="gray"
-              icon="i-heroicons-user"
+              icon="i-lucide-user-check"
+              size="xs"
+              class="px-2.5 py-1.5 text-xs font-medium"
             >
               Mis asignados
             </UButton>
@@ -102,20 +197,26 @@ const userMenuItems = computed(() => [[
               to="/tickets"
               variant="ghost"
               color="gray"
-              icon="i-heroicons-queue-list"
+              icon="i-lucide-ticket"
+              size="xs"
+              class="px-2.5 py-1.5 text-xs font-medium"
             >
               Mis tickets
             </UButton>
             <UButton
               to="/tickets/nuevo"
               color="primary"
-              icon="i-heroicons-plus"
+              variant="solid"
+              icon="i-lucide-plus"
+              size="xs"
+              class="px-2.5 py-1.5 text-xs font-medium"
             >
               Reportar incidencia
             </UButton>
           </template>
         </nav>
 
+        <!-- Right: Notification Bell & User Dropdown -->
         <div v-if="authStore.isAuthenticated" class="flex items-center gap-2">
           <!-- Notification Center Bell (FE-21) -->
           <NotificationBell />
@@ -127,96 +228,87 @@ const userMenuItems = computed(() => [[
             <UButton
               color="gray"
               variant="ghost"
-              trailing-icon="i-heroicons-chevron-down"
               aria-label="Abrir menú de usuario"
-              class="min-w-0"
+              class="min-w-0 p-1 rounded-full hover:bg-muted"
             >
               <span class="flex min-w-0 items-center gap-2">
-                <span class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-slate-100 text-slate-600">
-                  <UIcon name="i-heroicons-user" class="h-4 w-4" />
+                <!-- Circular Avatar -->
+                <span class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary-100/80 dark:bg-primary-950/60 text-primary-700 dark:text-primary-300 font-semibold text-xs border border-primary-200/80 dark:border-primary-800/80">
+                  <UIcon v-if="!userInitials" name="i-lucide-user" class="h-4 w-4" />
+                  <span v-else>{{ userInitials }}</span>
                 </span>
-                <span class="hidden min-w-0 text-left sm:block">
-                  <span class="block max-w-[10rem] truncate text-sm font-medium text-slate-800">
-                    {{ authStore.user?.nombre || (isSupportStaff ? 'Agente Soporte' : 'Cliente') }}
+                <span class="hidden xl:block min-w-0 text-left">
+                  <span class="block max-w-[8rem] truncate text-xs font-medium text-highlighted">
+                    {{ authStore.user?.nombre || (isSupportStaff ? 'Agente Soporte' : 'Cliente Datak') }}
                   </span>
-                  <span class="block max-w-[10rem] truncate text-xs font-normal text-slate-500">
+                  <span class="block max-w-[8rem] truncate text-[11px] font-normal text-muted tabular-nums">
                     {{ authStore.user?.correo }}
                   </span>
                 </span>
+                <UIcon name="i-lucide-chevron-down" class="hidden xl:block h-3.5 w-3.5 text-muted shrink-0" />
               </span>
             </UButton>
           </UDropdown>
         </div>
       </div>
 
-      <!-- Mobile info banner for Client Company / Staff role -->
-      <div v-if="!isSupportStaff && authStore.empresa" class="border-t border-slate-100 px-4 py-2 text-xs text-slate-600 lg:hidden">
-        <span class="font-medium">Empresa:</span> {{ authStore.empresa.nombre }}
-      </div>
-      <div v-else-if="isSupportStaff" class="border-t border-slate-100 px-4 py-2 text-xs font-medium text-amber-700 bg-amber-50/50 lg:hidden">
-        {{ supportRoleLabel }}
-      </div>
-
       <!-- Mobile Navigation -->
       <nav
-        class="border-t border-slate-200 bg-white md:hidden"
+        class="border-t border-default bg-default md:hidden"
         :class="isSupportStaff ? 'grid grid-cols-3' : 'grid grid-cols-2'"
         aria-label="Navegación móvil"
       >
         <template v-if="isSupportStaff">
           <NuxtLink
             to="/support/tickets"
-            class="flex items-center justify-center gap-1.5 border-r border-slate-200 px-2 py-3 text-xs font-medium text-slate-700 hover:bg-slate-50"
-            active-class="bg-primary-50 text-primary-700 font-semibold"
+            class="flex items-center justify-center gap-1.5 border-r border-default px-2 py-2.5 text-xs font-medium text-muted hover:bg-muted hover:text-highlighted transition-colors"
+            active-class="bg-primary-50 text-primary-700 dark:bg-primary-950/40 dark:text-primary-300 font-semibold"
           >
-            <UIcon name="i-heroicons-inbox-stack" class="h-4 w-4" />
+            <UIcon name="i-lucide-inbox" class="h-4 w-4" />
             Bandeja
           </NuxtLink>
           <NuxtLink
             to="/support/tickets/nuevo"
-            class="flex items-center justify-center gap-1.5 border-r border-slate-200 px-2 py-3 text-xs font-medium text-slate-700 hover:bg-slate-50"
-            active-class="bg-primary-50 text-primary-700 font-semibold"
+            class="flex items-center justify-center gap-1.5 border-r border-default px-2 py-2.5 text-xs font-medium text-muted hover:bg-muted hover:text-highlighted transition-colors"
+            active-class="bg-primary-50 text-primary-700 dark:bg-primary-950/40 dark:text-primary-300 font-semibold"
           >
-            <UIcon name="i-heroicons-plus-circle" class="h-4 w-4" />
+            <UIcon name="i-lucide-plus-circle" class="h-4 w-4" />
             Registrar
           </NuxtLink>
           <NuxtLink
             to="/support/mis-tickets"
-            class="flex items-center justify-center gap-1.5 px-2 py-3 text-xs font-medium text-slate-700 hover:bg-slate-50"
-            active-class="bg-primary-50 text-primary-700 font-semibold"
+            class="flex items-center justify-center gap-1.5 px-2 py-2.5 text-xs font-medium text-muted hover:bg-muted hover:text-highlighted transition-colors"
+            active-class="bg-primary-50 text-primary-700 dark:bg-primary-950/40 dark:text-primary-300 font-semibold"
           >
-            <UIcon name="i-heroicons-user" class="h-4 w-4" />
+            <UIcon name="i-lucide-user-check" class="h-4 w-4" />
             Asignados
           </NuxtLink>
         </template>
         <template v-else>
           <NuxtLink
             to="/tickets"
-            class="flex items-center justify-center gap-2 border-r border-slate-200 px-3 py-3 text-sm font-medium text-slate-700 hover:bg-slate-50"
-            active-class="bg-primary-50 text-primary-700"
+            class="flex items-center justify-center gap-2 border-r border-default px-3 py-2.5 text-sm font-medium text-muted hover:bg-muted hover:text-highlighted transition-colors"
+            active-class="bg-primary-50 text-primary-700 dark:bg-primary-950/40 dark:text-primary-300 font-semibold"
           >
-            <UIcon name="i-heroicons-queue-list" class="h-5 w-5" />
+            <UIcon name="i-lucide-ticket" class="h-4 w-4" />
             Mis tickets
           </NuxtLink>
           <NuxtLink
             to="/tickets/nuevo"
-            class="flex items-center justify-center gap-2 px-3 py-3 text-sm font-medium text-slate-700 hover:bg-slate-50"
-            active-class="bg-primary-50 text-primary-700"
+            class="flex items-center justify-center gap-2 px-3 py-2.5 text-sm font-medium text-muted hover:bg-muted hover:text-highlighted transition-colors"
+            active-class="bg-primary-50 text-primary-700 dark:bg-primary-950/40 dark:text-primary-300 font-semibold"
           >
-            <UIcon name="i-heroicons-plus-circle" class="h-5 w-5" />
+            <UIcon name="i-lucide-plus-circle" class="h-4 w-4" />
             Reportar incidencia
           </NuxtLink>
         </template>
       </nav>
     </header>
 
+    <!-- Main Workspace Content -->
     <main class="mx-auto w-full max-w-7xl flex-1 px-4 py-6 sm:px-6 sm:py-8 lg:px-8">
       <slot />
     </main>
-
-    <footer class="border-t border-slate-200 bg-white px-4 py-4 text-center text-xs text-slate-500">
-      Sistema de Gestión de Tickets de Soporte · Datak 2026
-    </footer>
 
     <!-- Floating Chatbot Assistant Widget (Only for clients, FE-10) -->
     <ChatbotWidget v-if="!isSupportStaff" />

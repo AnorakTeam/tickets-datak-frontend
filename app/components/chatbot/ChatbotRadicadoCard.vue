@@ -39,7 +39,7 @@ const handleCopy = async () => {
         title: 'Radicado copiado',
         description: `El número ${props.radicado} fue copiado al portapapeles.`,
         color: 'green',
-        icon: 'i-heroicons-clipboard-document-check',
+        icon: 'i-lucide-check-circle-2',
       })
     }
 
@@ -51,37 +51,37 @@ const handleCopy = async () => {
       title: 'Error al copiar',
       description: 'Por favor selecciona el número manualmente.',
       color: 'amber',
-      icon: 'i-heroicons-exclamation-triangle',
+      icon: 'i-lucide-alert-triangle',
     })
   }
 }
 </script>
 
 <template>
-  <div class="mt-2.5 bg-emerald-50 border border-emerald-200 rounded-xl p-3 text-xs space-y-2 text-slate-800" data-testid="chatbot-radicado-card">
-    <div class="flex items-center space-x-1.5 font-bold text-emerald-900 border-b border-emerald-200 pb-1.5">
-      <UIcon name="i-heroicons-check-badge" class="w-4 h-4 text-emerald-600 shrink-0" />
+  <div class="mt-2.5 bg-default border border-emerald-300 dark:border-emerald-800 rounded-xl p-3 text-xs space-y-2 text-default shadow-xs" data-testid="chatbot-radicado-card">
+    <div class="flex items-center space-x-1.5 font-semibold text-emerald-700 dark:text-emerald-400 border-b border-default pb-1.5">
+      <UIcon name="i-lucide-check-circle-2" class="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0" />
       <span>Ticket Radicado Exitosamente</span>
     </div>
 
-    <p class="text-xs text-slate-600">
+    <p class="text-xs text-muted leading-relaxed">
       {{ mensaje }}
     </p>
 
     <!-- Radicado Display with Copy Button -->
-    <div class="bg-white border border-emerald-200 rounded-lg p-2.5 flex items-center justify-between gap-2 shadow-xs">
+    <div class="bg-muted border border-default rounded-lg p-2.5 flex items-center justify-between gap-2 shadow-xs">
       <div>
-        <span class="block text-[10px] uppercase font-semibold text-slate-400">Radicado Oficial</span>
-        <span class="font-mono text-base font-extrabold text-blue-700 tracking-wider select-all" data-testid="chatbot-radicado-number">
+        <span class="block text-xs uppercase font-medium text-default dark:text-muted">Radicado Oficial</span>
+        <span class="font-mono text-base font-semibold tabular-nums text-primary-600 dark:text-primary-400 tracking-wider select-all" data-testid="chatbot-radicado-number">
           {{ radicado }}
         </span>
       </div>
 
       <UButton
         size="2xs"
-        :color="isCopied ? 'green' : 'primary'"
+        :color="isCopied ? 'emerald' : 'primary'"
         :variant="isCopied ? 'solid' : 'soft'"
-        :icon="isCopied ? 'i-heroicons-check' : 'i-heroicons-clipboard-document'"
+        :icon="isCopied ? 'i-lucide-check' : 'i-lucide-copy'"
         class="font-medium shrink-0"
         data-testid="chatbot-copy-radicado-btn"
         @click="handleCopy"
@@ -94,10 +94,10 @@ const handleCopy = async () => {
     <div class="pt-1 flex justify-end">
       <NuxtLink
         to="/tickets"
-        class="inline-flex items-center space-x-1 text-xs font-semibold text-blue-600 hover:text-blue-800 transition-colors"
+        class="inline-flex items-center space-x-1 text-xs font-medium text-primary-600 hover:text-primary-700 transition-colors"
       >
         <span>Ver en Mis Tickets</span>
-        <UIcon name="i-heroicons-arrow-top-right-on-square" class="w-3.5 h-3.5" />
+        <UIcon name="i-lucide-arrow-up-right" class="w-3.5 h-3.5" />
       </NuxtLink>
     </div>
   </div>

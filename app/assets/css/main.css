@@ -1,0 +1,149 @@
+/* ==============================================================================
+   Datak Tickets Design System — Typography and Theme Tokens
+   Norma de diseño extraída de datak/app/DESIGN.md
+   ============================================================================== */
+
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap');
+
+:root {
+  --font-sans: 'Poppins', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, Liberation Mono, Courier New, monospace;
+
+  /* Theme tokens: light mode */
+  --ui-bg-page: #f8fafc;        /* slate-50 */
+  --ui-bg-default: #ffffff;     /* white */
+  --ui-bg-muted: #f1f5f9;       /* slate-100 */
+  --ui-bg-elevated: #e2e8f0;    /* slate-200 */
+  --ui-border-default: #e2e8f0; /* slate-200 */
+  --ui-border-accented: #cbd5e1;/* slate-300 */
+
+  --ui-text-highlighted: #0f172a; /* slate-900 */
+  --ui-text-default: #334155;     /* slate-700 */
+  --ui-text-muted: #64748b;       /* slate-500 */
+  --ui-text-dimmed: #94a3b8;      /* slate-400 */
+}
+
+.dark {
+  /* Theme tokens: dark mode */
+  --ui-bg-page: #020617;        /* slate-950 */
+  --ui-bg-default: #0f172a;     /* slate-900 */
+  --ui-bg-muted: #1e293b;       /* slate-800 */
+  --ui-bg-elevated: #334155;    /* slate-700 */
+  --ui-border-default: #1e293b; /* slate-800 */
+  --ui-border-accented: #334155;/* slate-700 */
+
+  --ui-text-highlighted: #ffffff; /* white */
+  --ui-text-default: #e2e8f0;     /* slate-200 */
+  --ui-text-muted: #94a3b8;       /* slate-400 */
+  --ui-text-dimmed: #64748b;      /* slate-500 */
+}
+
+/* ==============================================================================
+   Base Typography & Measure
+   ============================================================================== */
+
+html,
+body {
+  font-family: var(--font-sans);
+  background-color: var(--ui-bg-page);
+  color: var(--ui-text-default);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Tabular numerals: DESIGN.md §1.4 Rule:
+   Todo valor numérico, radicado (TK-AAAA-NNNNNN), fecha, teléfono o moneda
+   usa tabular-nums (font-variant-numeric: tabular-nums) para evitar saltos de dígitos. */
+.tabular-nums,
+[data-numeric],
+[data-tabular],
+.radicado,
+th,
+td,
+time,
+code,
+pre {
+  font-variant-numeric: tabular-nums;
+  -webkit-font-feature-settings: "tnum" 1;
+  font-feature-settings: "tnum" 1;
+}
+
+/* Headings text-wrap balance & pretty body */
+h1, h2, h3, h4, h5, h6 {
+  text-wrap: balance;
+  color: var(--ui-text-highlighted);
+  letter-spacing: -0.015em;
+}
+
+p {
+  text-wrap: pretty;
+  line-height: 1.5;
+}
+
+/* Prosa y lectura confortable: 45–75 caracteres */
+.prose-measure {
+  max-width: 65ch;
+}
+
+/* Column headers of tables match Datak th standards: 11px font-semibold uppercase tracking-wide */
+thead th {
+  font-size: 11px;
+  line-height: 14px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--ui-text-muted);
+}
+
+/* Smooth transitions */
+.smooth {
+  transition: all 0.18s ease-out;
+}
+
+/* Datak brand accent topbar line */
+.datak-brand-stripe {
+  background: linear-gradient(to right, #f59e0b, #d97706);
+  height: 2px;
+  width: 100%;
+}
+
+/* ==============================================================================
+   Semantic Theme Utilities (DESIGN.md §1.3 Single Declaration Rule)
+   No need for dark: pairs in templates; classes adapt via CSS variables.
+   ============================================================================== */
+
+.bg-page {
+  background-color: var(--ui-bg-page);
+}
+.bg-default {
+  background-color: var(--ui-bg-default);
+}
+.bg-muted {
+  background-color: var(--ui-bg-muted);
+}
+.bg-elevated {
+  background-color: var(--ui-bg-elevated);
+}
+.border-default {
+  border-color: var(--ui-border-default);
+}
+.border-accented {
+  border-color: var(--ui-border-accented);
+}
+.text-highlighted {
+  color: var(--ui-text-highlighted);
+}
+.text-default {
+  color: var(--ui-text-default);
+}
+.text-muted {
+  color: var(--ui-text-muted);
+}
+.text-dimmed {
+  color: var(--ui-text-dimmed);
+}
+
+.smooth {
+  transition: all 0.18s cubic-bezier(0.16, 1, 0.3, 1);
+}
+

@@ -58,7 +58,7 @@ const submit = async () => {
       <div class="rounded-xl border border-default bg-default p-6 shadow-sm sm:p-8">
         <!-- Datak Brand Header -->
         <div class="mb-6 flex flex-col items-center text-center">
-          <img src="/img/Datak.png" alt="Datak" class="h-10 w-auto mb-3" />
+          <img :src="'/img/Datak.png'" alt="Datak" class="h-10 w-auto mb-3" />
           <h1 class="text-xl font-semibold tracking-tight text-highlighted">
             Iniciar sesión
           </h1>

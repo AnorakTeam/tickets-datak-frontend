@@ -96,7 +96,7 @@ const breadcrumbLinks = computed(() => {
             class="flex shrink-0 items-center gap-2 transition-opacity hover:opacity-90"
             aria-label="Ir al inicio"
           >
-            <img src="/img/DatakLogo.png" class="h-6 w-6 shrink-0" alt="Datak" />
+            <img :src="'/img/DatakLogo.png'" class="h-6 w-6 shrink-0" alt="Datak" />
             <span class="text-sm font-semibold tracking-tight text-highlighted sm:text-base">
               Tickets <span class="text-primary-600 font-medium">Datak</span>
             </span>

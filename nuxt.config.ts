@@ -33,6 +33,15 @@ export default defineNuxtConfig({
   colorMode: {
     preference: 'light',
   },
+  vite: {
+    vue: {
+      template: {
+        transformAssetUrls: {
+          includeAbsolute: false,
+        },
+      },
+    },
+  },
   runtimeConfig: {
     // Private server-side backend API URL (never exposed to client bundle)
     apiBaseUrl: process.env.NUXT_API_BASE_URL || process.env.API_BASE_URL || process.env.BACKEND_API_BASE_URL || 'http://localhost:8000',

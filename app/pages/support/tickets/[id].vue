@@ -31,6 +31,51 @@ const priorityPresentation = computed(() => ticket.value
   ? getTicketPriorityPresentation(ticket.value.prioridad)
   : null)
 
+const getStatusIcon = (estado?: string): string => {
+  switch (estado) {
+    case 'Abierto':
+      return 'i-lucide-clock'
+    case 'En gestion':
+      return 'i-lucide-hourglass'
+    case 'Resuelto':
+      return 'i-lucide-check-circle-2'
+    case 'No procedente':
+      return 'i-lucide-ban'
+    default:
+      return 'i-lucide-help-circle'
+  }
+}
+
+const getPriorityIcon = (prioridad?: string): string => {
+  switch (prioridad) {
+    case 'Baja':
+      return 'i-lucide-arrow-down'
+    case 'Media':
+      return 'i-lucide-minus'
+    case 'Alta':
+      return 'i-lucide-arrow-up'
+    case 'Critica':
+      return 'i-lucide-alert-triangle'
+    default:
+      return 'i-lucide-info'
+  }
+}
+
+const getChannelIcon = (canal?: string): string => {
+  switch (canal?.toLowerCase()) {
+    case 'whatsapp':
+      return 'i-lucide-message-circle'
+    case 'correo':
+    case 'email':
+      return 'i-lucide-mail'
+    case 'portal':
+    case 'web':
+      return 'i-lucide-globe'
+    default:
+      return 'i-lucide-inbox'
+  }
+}
+
 const actionLabels: Record<string, string> = {
   CREACION: 'Creación del ticket',
   CLASIFICACION: 'Clasificación del ticket',
@@ -74,33 +119,33 @@ onMounted(refresh)
   <section class="space-y-6">
     <NuxtLink
       to="/support/tickets"
-      class="inline-flex items-center gap-2 text-sm font-semibold text-primary-600 hover:text-primary-700"
+      class="inline-flex items-center gap-2 text-sm font-medium text-muted hover:text-highlighted transition-colors"
     >
-      <UIcon name="i-heroicons-arrow-left" class="h-4 w-4" />
+      <UIcon name="i-lucide-arrow-left" class="h-4 w-4" />
       Volver a la bandeja de soporte
     </NuxtLink>
 
     <div
       v-if="isLoading"
-      class="rounded-xl border border-slate-200 bg-white p-10 text-center shadow-sm"
+      class="rounded-xl border border-default bg-default p-10 text-center shadow-sm"
       data-testid="support-detail-loading"
       role="status"
     >
-      <UIcon name="i-heroicons-arrow-path" class="mx-auto h-8 w-8 animate-spin text-primary-600" />
-      <p class="mt-3 text-sm text-slate-600">Cargando detalle del ticket...</p>
+      <UIcon name="i-lucide-loader-2" class="mx-auto h-8 w-8 animate-spin text-primary-500" />
+      <p class="mt-3 text-sm text-muted">Cargando detalle del ticket...</p>
     </div>
 
     <div
       v-else-if="error"
-      class="rounded-xl border border-slate-200 bg-white p-8 text-center shadow-sm"
+      class="rounded-xl border border-default bg-default p-8 text-center shadow-sm"
       data-testid="support-detail-error"
       role="alert"
     >
-      <UIcon name="i-heroicons-document-magnifying-glass" class="mx-auto h-10 w-10 text-slate-400" />
-      <h1 class="mt-4 text-xl font-bold text-slate-950">
+      <UIcon name="i-lucide-file-search" class="mx-auto h-10 w-10 text-dimmed" />
+      <h1 class="mt-4 text-xl font-bold text-highlighted">
         {{ error === 'not-found' ? 'Ticket no encontrado' : error === 'invalid-id' ? 'Identificador no válido' : 'No fue posible cargar el ticket' }}
       </h1>
-      <p class="mt-2 text-sm text-slate-600">
+      <p class="mt-2 text-sm text-muted">
         {{ error === 'not-found'
           ? 'No encontramos un ticket de soporte con ese identificador.'
           : error === 'invalid-id'
@@ -110,9 +155,9 @@ onMounted(refresh)
       <UButton
         v-if="error === 'request-failed'"
         class="mt-4"
-        color="primary"
-        variant="soft"
-        icon="i-heroicons-arrow-path"
+        color="gray"
+        variant="outline"
+        icon="i-lucide-rotate-cw"
         data-testid="support-detail-retry"
         @click="refresh"
       >
@@ -121,42 +166,51 @@ onMounted(refresh)
     </div>
 
     <template v-else-if="ticket">
-      <header class="rounded-xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
+      <header class="rounded-xl border border-default bg-default p-5 shadow-sm sm:p-6">
         <div class="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
           <div class="min-w-0">
-            <p class="text-sm font-semibold text-amber-600">Consola de soporte</p>
-            <h1 class="mt-2 break-words text-2xl font-bold tracking-tight text-slate-950 sm:text-3xl">
+            <p class="text-xs font-semibold uppercase tracking-wider text-amber-600 dark:text-amber-400">Consola de soporte</p>
+            <h1 class="mt-2 break-words text-2xl font-bold tracking-tight text-highlighted sm:text-3xl">
               {{ ticket.asunto }}
             </h1>
             <div class="mt-4 flex flex-wrap items-center gap-2">
-              <UBadge v-if="statusPresentation" :color="statusPresentation.color" variant="subtle">
+              <UBadge color="gray" variant="subtle" size="sm" class="font-medium">
+                <UIcon name="i-lucide-building-2" class="mr-1 h-3.5 w-3.5 text-muted" />
+                {{ ticket.empresa.nombre }}
+              </UBadge>
+              <UBadge v-if="statusPresentation" :color="statusPresentation.color" variant="subtle" size="sm" class="font-medium">
+                <UIcon :name="getStatusIcon(ticket.estado)" class="mr-1 h-3.5 w-3.5" />
                 {{ statusPresentation.label }}
               </UBadge>
-              <UBadge v-if="priorityPresentation" :color="priorityPresentation.color" variant="subtle">
+              <UBadge v-if="priorityPresentation" :color="priorityPresentation.color" variant="subtle" size="sm" class="font-medium">
+                <UIcon :name="getPriorityIcon(ticket.prioridad)" class="mr-1 h-3.5 w-3.5" />
                 Prioridad {{ priorityPresentation.label.toLowerCase() }}
               </UBadge>
-              <UBadge color="gray" variant="subtle">{{ ticket.canal_origen }}</UBadge>
+              <UBadge color="gray" variant="subtle" size="sm" class="font-medium">
+                <UIcon :name="getChannelIcon(ticket.canal_origen)" class="mr-1 h-3.5 w-3.5 text-muted" />
+                {{ ticket.canal_origen }}
+              </UBadge>
             </div>
           </div>
 
-          <div class="min-w-0 rounded-lg bg-slate-50 p-4 lg:min-w-60">
-            <p class="text-xs font-semibold uppercase tracking-wide text-slate-500">Radicado</p>
+          <div class="min-w-0 rounded-lg border border-default bg-muted/60 p-4 lg:min-w-60">
+            <p class="text-xs font-semibold uppercase tracking-wider text-muted">Radicado</p>
             <div class="mt-2 flex items-center justify-between gap-3">
-              <span class="break-all font-mono text-sm font-bold text-slate-950 sm:text-base">{{ ticket.radicado }}</span>
+              <span class="break-all font-mono tabular-nums text-sm font-bold text-highlighted sm:text-base">{{ ticket.radicado }}</span>
               <button
                 type="button"
-                class="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-md text-primary-600 hover:bg-primary-50"
+                class="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-muted hover:bg-default hover:text-highlighted border border-transparent hover:border-default transition-colors"
                 aria-label="Copiar radicado"
                 data-testid="support-detail-copy"
                 @click="copyRadicado"
               >
-                <UIcon name="i-heroicons-clipboard-document" class="h-5 w-5" />
+                <UIcon name="i-lucide-copy" class="h-4 w-4" />
               </button>
             </div>
             <p
               v-if="copyFeedback !== 'idle'"
               class="mt-2 text-xs font-medium"
-              :class="copyFeedback === 'copied' ? 'text-green-700' : 'text-red-700'"
+              :class="copyFeedback === 'copied' ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-600 dark:text-red-400'"
               data-testid="support-detail-copy-feedback"
               role="status"
             >
@@ -168,64 +222,64 @@ onMounted(refresh)
 
       <div class="grid gap-6 lg:grid-cols-[minmax(0,2fr)_minmax(18rem,1fr)]">
         <div class="min-w-0 space-y-6">
-          <article class="rounded-xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6" data-testid="support-report-card">
-            <h2 class="text-lg font-bold text-slate-950">Información del reporte</h2>
+          <article class="rounded-xl border border-default bg-default p-5 shadow-sm sm:p-6" data-testid="support-report-card">
+            <h2 class="text-lg font-bold text-highlighted">Información del reporte</h2>
             <dl class="mt-5 grid gap-5 sm:grid-cols-2">
               <div>
-                <dt class="text-xs font-semibold uppercase tracking-wide text-slate-500">Empresa</dt>
-                <dd class="mt-1 break-words text-sm font-medium text-slate-900">{{ ticket.empresa.nombre }}</dd>
-                <dd v-if="ticket.empresa.identificacion" class="mt-0.5 text-xs text-slate-500">{{ ticket.empresa.identificacion }}</dd>
+                <dt class="text-xs font-semibold uppercase tracking-wide text-muted">Empresa</dt>
+                <dd class="mt-1 break-words text-sm font-medium text-highlighted">{{ ticket.empresa.nombre }}</dd>
+                <dd v-if="ticket.empresa.identificacion" class="mt-0.5 text-xs text-muted tabular-nums">{{ ticket.empresa.identificacion }}</dd>
               </div>
               <div>
-                <dt class="text-xs font-semibold uppercase tracking-wide text-slate-500">Cliente que reportó</dt>
-                <dd class="mt-1 break-words text-sm font-medium text-slate-900">{{ ticket.creado_por.nombre }}</dd>
-                <dd class="mt-0.5 break-all text-xs text-slate-500">{{ ticket.creado_por.correo }}</dd>
+                <dt class="text-xs font-semibold uppercase tracking-wide text-muted">Cliente que reportó</dt>
+                <dd class="mt-1 break-words text-sm font-medium text-highlighted">{{ ticket.creado_por.nombre }}</dd>
+                <dd class="mt-0.5 break-all text-xs text-muted">{{ ticket.creado_por.correo }}</dd>
               </div>
               <div>
-                <dt class="text-xs font-semibold uppercase tracking-wide text-slate-500">Módulo contratado</dt>
-                <dd class="mt-1 text-sm font-medium text-slate-900">{{ ticket.modulo.nombre }}</dd>
-                <dd class="mt-0.5 text-xs text-slate-500">{{ ticket.modulo.codigo }}</dd>
+                <dt class="text-xs font-semibold uppercase tracking-wide text-muted">Módulo contratado</dt>
+                <dd class="mt-1 text-sm font-medium text-highlighted">{{ ticket.modulo.nombre }}</dd>
+                <dd class="mt-0.5 text-xs text-muted font-mono">{{ ticket.modulo.codigo }}</dd>
               </div>
               <div>
-                <dt class="text-xs font-semibold uppercase tracking-wide text-slate-500">Pantalla o documento</dt>
-                <dd class="mt-1 break-words text-sm font-medium text-slate-900">{{ ticket.pestana_o_documento }}</dd>
+                <dt class="text-xs font-semibold uppercase tracking-wide text-muted">Pantalla o documento</dt>
+                <dd class="mt-1 break-words text-sm font-medium text-highlighted">{{ ticket.pestana_o_documento }}</dd>
               </div>
               <div>
-                <dt class="text-xs font-semibold uppercase tracking-wide text-slate-500">Registrado por agente</dt>
-                <dd class="mt-1 break-words text-sm font-medium text-slate-900">{{ ticket.registrado_por_agente?.nombre || 'Registrado por el cliente' }}</dd>
-                <dd v-if="ticket.registrado_por_agente" class="mt-0.5 break-all text-xs text-slate-500">{{ ticket.registrado_por_agente.correo }}</dd>
+                <dt class="text-xs font-semibold uppercase tracking-wide text-muted">Registrado por agente</dt>
+                <dd class="mt-1 break-words text-sm font-medium text-highlighted">{{ ticket.registrado_por_agente?.nombre || 'Registrado por el cliente' }}</dd>
+                <dd v-if="ticket.registrado_por_agente" class="mt-0.5 break-all text-xs text-muted">{{ ticket.registrado_por_agente.correo }}</dd>
               </div>
               <div>
-                <dt class="text-xs font-semibold uppercase tracking-wide text-slate-500">Fecha de creación</dt>
-                <dd class="mt-1 text-sm font-medium text-slate-900">{{ formatTicketDateTime(ticket.fecha_creacion) }}</dd>
+                <dt class="text-xs font-semibold uppercase tracking-wide text-muted">Fecha de creación</dt>
+                <dd class="mt-1 text-sm font-medium text-highlighted tabular-nums">{{ formatTicketDateTime(ticket.fecha_creacion) }}</dd>
               </div>
             </dl>
-            <div class="mt-6 border-t border-slate-100 pt-5">
-              <h3 class="text-sm font-semibold text-slate-900">Descripción de la incidencia</h3>
-              <p class="mt-2 whitespace-pre-wrap break-words text-sm leading-6 text-slate-700">{{ ticket.descripcion }}</p>
+            <div class="mt-6 border-t border-default pt-5">
+              <h3 class="text-sm font-semibold text-highlighted">Descripción de la incidencia</h3>
+              <p class="mt-2 whitespace-pre-wrap break-words text-sm leading-6 text-default">{{ ticket.descripcion }}</p>
             </div>
-            <div v-if="ticket.mensaje_error" class="mt-5 rounded-lg border border-amber-200 bg-amber-50 p-4">
-              <h3 class="text-sm font-semibold text-amber-900">Mensaje de error reportado</h3>
-              <pre class="mt-2 whitespace-pre-wrap break-all font-mono text-xs leading-5 text-amber-900">{{ ticket.mensaje_error }}</pre>
+            <div v-if="ticket.mensaje_error" class="mt-5 rounded-lg border border-amber-200 bg-amber-50/70 p-4 dark:border-amber-900/50 dark:bg-amber-950/20">
+              <h3 class="text-sm font-semibold text-amber-900 dark:text-amber-200">Mensaje de error reportado</h3>
+              <pre class="mt-2 whitespace-pre-wrap break-all font-mono text-xs leading-5 text-amber-900 dark:text-amber-200">{{ ticket.mensaje_error }}</pre>
             </div>
-            <div v-if="ticket.estado === 'Resuelto' && ticket.comentario_solucion" class="mt-5 rounded-lg border border-green-200 bg-green-50 p-4">
-              <h3 class="text-sm font-semibold text-green-900">Solución registrada</h3>
-              <p class="mt-2 whitespace-pre-wrap break-words text-sm text-green-900">{{ ticket.comentario_solucion }}</p>
+            <div v-if="ticket.estado === 'Resuelto' && ticket.comentario_solucion" class="mt-5 rounded-lg border border-emerald-200 bg-emerald-50/70 p-4 dark:border-emerald-900/50 dark:bg-emerald-950/20">
+              <h3 class="text-sm font-semibold text-emerald-900 dark:text-emerald-200">Solución registrada</h3>
+              <p class="mt-2 whitespace-pre-wrap break-words text-sm text-emerald-900 dark:text-emerald-200">{{ ticket.comentario_solucion }}</p>
             </div>
-            <div v-if="ticket.estado === 'No procedente' && ticket.motivo_no_procedente" class="mt-5 rounded-lg border border-slate-200 bg-slate-50 p-4">
-              <h3 class="text-sm font-semibold text-slate-900">Motivo de no procedencia</h3>
-              <p class="mt-2 whitespace-pre-wrap break-words text-sm text-slate-700">{{ ticket.motivo_no_procedente }}</p>
+            <div v-if="ticket.estado === 'No procedente' && ticket.motivo_no_procedente" class="mt-5 rounded-lg border border-default bg-muted p-4">
+              <h3 class="text-sm font-semibold text-highlighted">Motivo de no procedencia</h3>
+              <p class="mt-2 whitespace-pre-wrap break-words text-sm text-default">{{ ticket.motivo_no_procedente }}</p>
             </div>
           </article>
 
-          <article class="rounded-xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6" data-testid="support-history-card">
+          <article class="rounded-xl border border-default bg-default p-5 shadow-sm sm:p-6" data-testid="support-history-card">
             <div class="flex items-center justify-between gap-3">
-              <h2 class="text-lg font-bold text-slate-950">Historial de auditoría</h2>
-              <UBadge color="gray" variant="subtle">{{ history.length }} eventos</UBadge>
+              <h2 class="text-lg font-bold text-highlighted">Historial de auditoría</h2>
+              <UBadge color="gray" variant="subtle" size="xs">{{ history.length }} eventos</UBadge>
             </div>
-            <p class="mt-1 text-xs text-slate-500">Registro cronológico de la actividad interna y pública del ticket.</p>
+            <p class="mt-1 text-xs text-muted">Registro cronológico de la actividad interna y pública del ticket.</p>
 
-            <p v-if="history.length === 0" class="mt-6 rounded-lg border border-dashed border-slate-200 bg-slate-50 p-5 text-sm text-slate-600" data-testid="support-history-empty">
+            <p v-if="history.length === 0" class="mt-6 rounded-lg border border-dashed border-default bg-muted p-5 text-sm text-muted" data-testid="support-history-empty">
               Este ticket no registra eventos de auditoría todavía.
             </p>
             <ol v-else class="mt-6 space-y-0" data-testid="support-history-timeline">
@@ -235,26 +289,29 @@ onMounted(refresh)
                 class="relative flex gap-4 pb-7 last:pb-0"
                 data-testid="support-history-event"
               >
-                <span v-if="index < history.length - 1" class="absolute left-[0.6875rem] top-6 h-[calc(100%-1.5rem)] w-px bg-slate-200" />
+                <span v-if="index < history.length - 1" class="absolute left-[0.6875rem] top-6 h-[calc(100%-1.5rem)] w-px bg-default" />
                 <span
                   class="relative mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full border-4"
-                  :class="item.es_interna ? 'border-amber-100 bg-amber-600' : 'border-primary-100 bg-primary-600'"
+                  :class="item.es_interna ? 'border-amber-100 bg-amber-500 dark:border-amber-900 dark:bg-amber-600' : 'border-primary-100 bg-primary-600 dark:border-primary-900 dark:bg-primary-500'"
                 />
                 <div class="min-w-0 flex-1">
                   <div class="flex flex-wrap items-center gap-2">
-                    <h3 class="text-sm font-semibold text-slate-950">{{ actionLabel(item) }}</h3>
-                    <UBadge v-if="item.es_interna" color="amber" variant="subtle" size="xs">Nota interna</UBadge>
+                    <h3 class="text-sm font-semibold text-highlighted">{{ actionLabel(item) }}</h3>
+                    <UBadge v-if="item.es_interna" color="amber" variant="subtle" size="xs">
+                      <UIcon name="i-lucide-lock" class="mr-1 h-3 w-3" />
+                      Nota interna
+                    </UBadge>
                   </div>
-                  <p class="mt-1 text-xs text-slate-500">
+                  <p class="mt-1 text-xs text-muted tabular-nums">
                     {{ item.actor.nombre }} · {{ formatTicketDateTime(item.fecha_creacion) }}
                   </p>
-                  <p v-if="item.estado_anterior || item.estado_nuevo" class="mt-2 text-xs font-medium text-slate-600">
+                  <p v-if="item.estado_anterior || item.estado_nuevo" class="mt-2 text-xs font-medium text-default">
                     Estado: {{ item.estado_anterior || 'Sin estado anterior' }} → {{ item.estado_nuevo || 'Sin cambio registrado' }}
                   </p>
-                  <p v-if="item.responsable_asignado" class="mt-1 text-xs text-slate-600">
+                  <p v-if="item.responsable_asignado" class="mt-1 text-xs text-default">
                     Responsable asignado: {{ item.responsable_asignado.nombre }}
                   </p>
-                  <p v-if="item.observaciones" class="mt-2 whitespace-pre-wrap break-words text-sm leading-6 text-slate-700">{{ item.observaciones }}</p>
+                  <p v-if="item.observaciones" class="mt-2 whitespace-pre-wrap break-words text-sm leading-6 text-default">{{ item.observaciones }}</p>
                 </div>
               </li>
             </ol>
@@ -262,25 +319,25 @@ onMounted(refresh)
         </div>
 
         <aside class="min-w-0 space-y-6">
-          <section class="rounded-xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6" data-testid="support-management-summary">
-            <h2 class="text-lg font-bold text-slate-950">Resumen de gestión</h2>
+          <section class="rounded-xl border border-default bg-default p-5 shadow-sm sm:p-6" data-testid="support-management-summary">
+            <h2 class="text-lg font-bold text-highlighted">Resumen de gestión</h2>
             <dl class="mt-5 space-y-4">
               <div>
-                <dt class="text-xs font-semibold uppercase tracking-wide text-slate-500">Responsable actual</dt>
-                <dd class="mt-1 text-sm font-medium text-slate-900">{{ ticket.responsable?.nombre || 'Sin asignar' }}</dd>
-                <dd v-if="ticket.responsable" class="mt-0.5 break-all text-xs text-slate-500">{{ ticket.responsable.correo }}</dd>
+                <dt class="text-xs font-semibold uppercase tracking-wide text-muted">Responsable actual</dt>
+                <dd class="mt-1 text-sm font-medium text-highlighted">{{ ticket.responsable?.nombre || 'Sin asignar' }}</dd>
+                <dd v-if="ticket.responsable" class="mt-0.5 break-all text-xs text-muted">{{ ticket.responsable.correo }}</dd>
               </div>
               <div>
-                <dt class="text-xs font-semibold uppercase tracking-wide text-slate-500">Clasificación</dt>
-                <dd class="mt-1 text-sm font-medium text-slate-900">{{ ticket.clasificacion || 'Sin clasificar' }}</dd>
+                <dt class="text-xs font-semibold uppercase tracking-wide text-muted">Clasificación</dt>
+                <dd class="mt-1 text-sm font-medium text-highlighted">{{ ticket.clasificacion || 'Sin clasificar' }}</dd>
               </div>
               <div>
-                <dt class="text-xs font-semibold uppercase tracking-wide text-slate-500">Última actualización</dt>
-                <dd class="mt-1 text-sm font-medium text-slate-900">{{ formatTicketDateTime(ticket.fecha_actualizacion) }}</dd>
+                <dt class="text-xs font-semibold uppercase tracking-wide text-muted">Última actualización</dt>
+                <dd class="mt-1 text-sm font-medium text-highlighted tabular-nums">{{ formatTicketDateTime(ticket.fecha_actualizacion) }}</dd>
               </div>
               <div v-if="ticket.fecha_resolucion">
-                <dt class="text-xs font-semibold uppercase tracking-wide text-slate-500">Fecha de cierre</dt>
-                <dd class="mt-1 text-sm font-medium text-slate-900">{{ formatTicketDateTime(ticket.fecha_resolucion) }}</dd>
+                <dt class="text-xs font-semibold uppercase tracking-wide text-muted">Fecha de cierre</dt>
+                <dd class="mt-1 text-sm font-medium text-highlighted tabular-nums">{{ formatTicketDateTime(ticket.fecha_resolucion) }}</dd>
               </div>
             </dl>
           </section>

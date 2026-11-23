@@ -73,6 +73,27 @@ const stubs = {
     props: ['name'],
     template: '<i :data-icon="name" />',
   },
+  UTable: {
+    props: ['columns', 'rows', 'loading'],
+    template: `
+      <table data-testid="support-tickets-table">
+        <thead>
+          <tr>
+            <th v-for="col in columns" :key="col.key">{{ col.label }}</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr v-for="(row, idx) in rows" :key="idx">
+            <td v-for="col in columns" :key="col.key">
+              <slot :name="col.key + '-data'" :row="row" :column="col">
+                {{ row[col.key] }}
+              </slot>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    `,
+  },
 }
 
 const mountPage = () => mount(SupportTicketsIndexPage, {

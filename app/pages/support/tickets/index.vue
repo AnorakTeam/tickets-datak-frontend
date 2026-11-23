@@ -1,7 +1,9 @@
 <script setup lang="ts">
-import { onMounted, ref, watch } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import { useSupportTickets } from '~/composables/useSupportTickets'
 import type { TicketPriority, TicketStatus } from '~/services/ticketService'
+import ListToolbarGrid from '~/components/list/ToolbarGrid.vue'
+import FilterChip from '~/components/filter/FilterChip.vue'
 import {
   formatTicketDate,
   getTicketPriorityPresentation,
@@ -27,7 +29,6 @@ const {
   selectedStatus,
   selectedPriority,
   selectedChannel,
-  searchQuery,
   empresas,
   isLoadingEmpresas,
   hasPreviousPage,
@@ -80,6 +81,95 @@ const channelOptions = [
   { label: 'Otro', value: 'Otro' },
 ]
 
+const selectedEmpresaNombre = computed(() => {
+  if (!selectedEmpresa.value) return null
+  return empresas.value.find((e) => e.id === selectedEmpresa.value)?.nombre ?? null
+})
+
+const selectedStatusLabel = computed(() => {
+  if (!selectedStatus.value) return null
+  return statusOptions.find((o) => o.value === selectedStatus.value)?.label ?? null
+})
+
+const selectedPriorityLabel = computed(() => {
+  if (!selectedPriority.value) return null
+  return priorityOptions.find((o) => o.value === selectedPriority.value)?.label ?? null
+})
+
+const selectedChannelLabel = computed(() => {
+  if (!selectedChannel.value) return null
+  return selectedChannel.value
+})
+
+const hasActiveFilters = computed(() => {
+  return Boolean(
+    selectedEmpresa.value ||
+    selectedStatus.value ||
+    selectedPriority.value ||
+    selectedChannel.value ||
+    localSearch.value.trim()
+  )
+})
+
+const columns = [
+  { key: 'radicado', label: 'Radicado' },
+  { key: 'empresa', label: 'Empresa' },
+  { key: 'asunto', label: 'Asunto y Módulo' },
+  { key: 'canal', label: 'Canal' },
+  { key: 'prioridad', label: 'Prioridad' },
+  { key: 'estado', label: 'Estado' },
+  { key: 'responsable', label: 'Responsable' },
+  { key: 'fecha', label: 'Fecha' },
+  { key: 'actions', label: '' },
+]
+
+const getStatusIcon = (estado?: string): string => {
+  switch (estado) {
+    case 'Abierto':
+      return 'i-lucide-clock'
+    case 'En gestion':
+      return 'i-lucide-hourglass'
+    case 'Resuelto':
+      return 'i-lucide-check-circle-2'
+    case 'No procedente':
+      return 'i-lucide-ban'
+    default:
+      return 'i-lucide-help-circle'
+  }
+}
+
+const getPriorityIcon = (prioridad?: string): string => {
+  switch (prioridad) {
+    case 'Baja':
+      return 'i-lucide-arrow-down'
+    case 'Media':
+      return 'i-lucide-minus'
+    case 'Alta':
+      return 'i-lucide-arrow-up'
+    case 'Critica':
+      return 'i-lucide-alert-triangle'
+    default:
+      return 'i-lucide-info'
+  }
+}
+
+const getChannelIcon = (canal?: string): string => {
+  switch (canal?.toLowerCase()) {
+    case 'portal':
+      return 'i-lucide-globe'
+    case 'chatbot':
+      return 'i-lucide-bot'
+    case 'whatsapp':
+      return 'i-lucide-message-circle'
+    case 'slack':
+      return 'i-lucide-hash'
+    case 'correo':
+      return 'i-lucide-mail'
+    default:
+      return 'i-lucide-send'
+  }
+}
+
 const handleResetFilters = async () => {
   localSearch.value = ''
   await clearFilters()
@@ -91,15 +181,15 @@ onMounted(async () => {
 </script>
 
 <template>
-  <div class="space-y-6">
+  <div class="space-y-5">
     <!-- Header Section -->
-    <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+    <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
       <div>
-        <p class="text-sm font-semibold text-amber-600">Consola de soporte</p>
-        <h1 class="mt-1 text-2xl font-bold tracking-tight text-slate-950 sm:text-3xl">
+        <p class="text-xs font-semibold uppercase tracking-wider text-amber-600 dark:text-amber-400">Consola de soporte</p>
+        <h1 class="mt-1 text-2xl font-bold tracking-tight text-highlighted sm:text-3xl">
           Bandeja unificada de soporte
         </h1>
-        <p class="mt-1 text-sm text-slate-600">
+        <p class="mt-0.5 text-xs text-muted">
           Gestión centralizada, triaje multitenant y asignación de tickets de clientes.
         </p>
       </div>
@@ -108,99 +198,124 @@ onMounted(async () => {
         <UButton
           to="/support/tickets/nuevo"
           color="primary"
-          icon="i-heroicons-plus"
-          class="w-full justify-center sm:w-auto"
+          variant="solid"
+          icon="i-lucide-plus"
+          class="w-full justify-center sm:w-auto font-medium"
         >
           Registrar ticket externo
         </UButton>
       </div>
     </div>
 
-    <!-- Filters Section -->
-    <div class="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5">
-      <div class="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-5">
-        <!-- Text Search -->
-        <div class="lg:col-span-1">
-          <label class="block text-xs font-medium text-slate-600 mb-1">Buscar</label>
-          <UInput
-            :model-value="localSearch"
-            icon="i-heroicons-magnifying-glass"
-            placeholder="Radicado o asunto..."
-            size="sm"
-            @update:model-value="onSearchInput"
-          />
-        </div>
-
-        <!-- Empresa Filter -->
-        <div>
-          <label class="block text-xs font-medium text-slate-600 mb-1">Empresa</label>
-          <select
-            :value="selectedEmpresa ?? ''"
-            class="w-full rounded-md border border-slate-300 bg-white px-2.5 py-1.5 text-xs text-slate-800 focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500 disabled:opacity-50"
-            :disabled="isLoading || isLoadingEmpresas"
-            aria-label="Filtrar por empresa"
-            @change="setEmpresa(($event.target as HTMLSelectElement).value ? Number(($event.target as HTMLSelectElement).value) : null)"
-          >
-            <option value="">Todas las empresas</option>
-            <option
-              v-for="emp in empresas"
-              :key="emp.id"
-              :value="emp.id"
+    <!-- Toolbar Grid with Search and Superdatak FilterChips -->
+    <ListToolbarGrid
+      v-model:search="localSearch"
+      placeholder="Radicado, asunto o empresa..."
+      @update:search="onSearchInput"
+    >
+      <template #filters>
+        <div class="flex flex-wrap items-center gap-2">
+          <!-- Empresa Filter Chip with Native Accessible Select Overlay -->
+          <div class="relative inline-flex items-center">
+            <FilterChip
+              label="Empresa"
+              :display="selectedEmpresaNombre"
+              :active="Boolean(selectedEmpresa)"
+              :clearable="Boolean(selectedEmpresa)"
+              :chevron="!selectedEmpresa"
+              :disabled="isLoading || isLoadingEmpresas"
+              @clear="setEmpresa(null)"
+            />
+            <select
+              :value="selectedEmpresa ?? ''"
+              aria-label="Filtrar por empresa"
+              class="absolute inset-0 opacity-0 cursor-pointer w-full h-full"
+              :disabled="isLoading || isLoadingEmpresas"
+              @change="setEmpresa(($event.target as HTMLSelectElement).value ? Number(($event.target as HTMLSelectElement).value) : null)"
             >
-              {{ emp.nombre }}
-            </option>
-          </select>
-        </div>
+              <option value="">Todas las empresas</option>
+              <option
+                v-for="emp in empresas"
+                :key="emp.id"
+                :value="emp.id"
+              >
+                {{ emp.nombre }}
+              </option>
+            </select>
+          </div>
 
-        <!-- Estado Filter -->
-        <div>
-          <label class="block text-xs font-medium text-slate-600 mb-1">Estado</label>
-          <select
-            :value="selectedStatus ?? ''"
-            class="w-full rounded-md border border-slate-300 bg-white px-2.5 py-1.5 text-xs text-slate-800 focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500 disabled:opacity-50"
-            :disabled="isLoading"
-            aria-label="Filtrar por estado"
-            @change="setStatus((($event.target as HTMLSelectElement).value as TicketStatus) || null)"
-          >
-            <option
-              v-for="opt in statusOptions"
-              :key="opt.label"
-              :value="opt.value ?? ''"
+          <!-- Estado Filter Chip with Native Accessible Select Overlay -->
+          <div class="relative inline-flex items-center">
+            <FilterChip
+              label="Estado"
+              :display="selectedStatusLabel"
+              :active="Boolean(selectedStatus)"
+              :clearable="Boolean(selectedStatus)"
+              :chevron="!selectedStatus"
+              :disabled="isLoading"
+              @clear="setStatus(null)"
+            />
+            <select
+              :value="selectedStatus ?? ''"
+              aria-label="Filtrar por estado"
+              class="absolute inset-0 opacity-0 cursor-pointer w-full h-full"
+              :disabled="isLoading"
+              @change="setStatus((($event.target as HTMLSelectElement).value as TicketStatus) || null)"
             >
-              {{ opt.label }}
-            </option>
-          </select>
-        </div>
+              <option
+                v-for="opt in statusOptions"
+                :key="opt.label"
+                :value="opt.value ?? ''"
+              >
+                {{ opt.label }}
+              </option>
+            </select>
+          </div>
 
-        <!-- Prioridad Filter -->
-        <div>
-          <label class="block text-xs font-medium text-slate-600 mb-1">Prioridad</label>
-          <select
-            :value="selectedPriority ?? ''"
-            class="w-full rounded-md border border-slate-300 bg-white px-2.5 py-1.5 text-xs text-slate-800 focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500 disabled:opacity-50"
-            :disabled="isLoading"
-            aria-label="Filtrar por prioridad"
-            @change="setPriority((($event.target as HTMLSelectElement).value as TicketPriority) || null)"
-          >
-            <option
-              v-for="opt in priorityOptions"
-              :key="opt.label"
-              :value="opt.value ?? ''"
+          <!-- Prioridad Filter Chip with Native Accessible Select Overlay -->
+          <div class="relative inline-flex items-center">
+            <FilterChip
+              label="Prioridad"
+              :display="selectedPriorityLabel"
+              :active="Boolean(selectedPriority)"
+              :clearable="Boolean(selectedPriority)"
+              :chevron="!selectedPriority"
+              :disabled="isLoading"
+              @clear="setPriority(null)"
+            />
+            <select
+              :value="selectedPriority ?? ''"
+              aria-label="Filtrar por prioridad"
+              class="absolute inset-0 opacity-0 cursor-pointer w-full h-full"
+              :disabled="isLoading"
+              @change="setPriority((($event.target as HTMLSelectElement).value as TicketPriority) || null)"
             >
-              {{ opt.label }}
-            </option>
-          </select>
-        </div>
+              <option
+                v-for="opt in priorityOptions"
+                :key="opt.label"
+                :value="opt.value ?? ''"
+              >
+                {{ opt.label }}
+              </option>
+            </select>
+          </div>
 
-        <!-- Canal de Origen Filter -->
-        <div>
-          <label class="block text-xs font-medium text-slate-600 mb-1">Canal de origen</label>
-          <div class="flex items-center gap-1.5">
+          <!-- Canal Filter Chip with Native Accessible Select Overlay -->
+          <div class="relative inline-flex items-center">
+            <FilterChip
+              label="Canal"
+              :display="selectedChannelLabel"
+              :active="Boolean(selectedChannel)"
+              :clearable="Boolean(selectedChannel)"
+              :chevron="!selectedChannel"
+              :disabled="isLoading"
+              @clear="setChannel(null)"
+            />
             <select
               :value="selectedChannel ?? ''"
-              class="w-full rounded-md border border-slate-300 bg-white px-2.5 py-1.5 text-xs text-slate-800 focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500 disabled:opacity-50"
-              :disabled="isLoading"
               aria-label="Filtrar por canal de origen"
+              class="absolute inset-0 opacity-0 cursor-pointer w-full h-full"
+              :disabled="isLoading"
               @change="setChannel(($event.target as HTMLSelectElement).value || null)"
             >
               <option
@@ -211,37 +326,42 @@ onMounted(async () => {
                 {{ opt.label }}
               </option>
             </select>
-
-            <UButton
-              color="gray"
-              variant="soft"
-              size="xs"
-              icon="i-heroicons-arrow-path"
-              title="Limpiar filtros"
-              aria-label="Limpiar filtros"
-              class="shrink-0"
-              :disabled="isLoading"
-              @click="handleResetFilters"
-            />
           </div>
+
+          <!-- Reset Filters Button if any active -->
+          <UButton
+            v-if="hasActiveFilters"
+            size="xs"
+            color="gray"
+            variant="ghost"
+            icon="i-lucide-x"
+            class="text-xs text-muted hover:text-highlighted"
+            title="Restablecer filtros"
+            aria-label="Limpiar filtros"
+            :disabled="isLoading"
+            @click="handleResetFilters"
+          >
+            Limpiar filtros
+          </UButton>
         </div>
-      </div>
-    </div>
+      </template>
+    </ListToolbarGrid>
 
     <!-- Error Alert -->
     <div
       v-if="errorMessage"
       role="alert"
-      class="flex items-center justify-between rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-700"
+      class="flex items-center justify-between rounded-xl border border-red-200 dark:border-red-900 bg-red-50/70 dark:bg-red-950/30 p-4 text-xs sm:text-sm text-red-800 dark:text-red-300"
     >
       <div class="flex items-center gap-2">
-        <UIcon name="i-heroicons-exclamation-triangle" class="h-5 w-5 shrink-0 text-red-600" />
+        <UIcon name="i-lucide-alert-triangle" class="h-4 w-4 shrink-0 text-red-600 dark:text-red-400" />
         <span>{{ errorMessage }}</span>
       </div>
       <UButton
         color="red"
         variant="ghost"
         size="xs"
+        icon="i-lucide-refresh-cw"
         @click="loadTickets"
       >
         Reintentar
@@ -249,26 +369,26 @@ onMounted(async () => {
     </div>
 
     <!-- Loading State -->
-    <div v-if="isLoading" class="space-y-3 py-6" aria-label="Cargando tickets de soporte">
+    <div v-if="isLoading" class="space-y-2 py-4" aria-label="Cargando tickets de soporte">
       <div
         v-for="i in 5"
         :key="i"
-        class="h-14 w-full animate-pulse rounded-xl bg-slate-100"
+        class="h-10 w-full animate-pulse rounded-lg bg-muted"
       />
     </div>
 
     <!-- Empty State -->
     <div
       v-else-if="tickets.length === 0"
-      class="flex flex-col items-center justify-center rounded-2xl border border-dashed border-slate-300 bg-white py-14 text-center"
+      class="flex flex-col items-center justify-center rounded-xl border border-dashed border-default bg-default py-12 text-center"
     >
-      <div class="flex h-12 w-12 items-center justify-center rounded-full bg-slate-100 text-slate-400">
-        <UIcon name="i-heroicons-inbox" class="h-6 w-6" />
+      <div class="flex h-12 w-12 items-center justify-center rounded-full bg-muted text-muted">
+        <UIcon name="i-lucide-inbox" class="h-6 w-6" />
       </div>
-      <h3 class="mt-3 text-base font-semibold text-slate-800">
+      <h3 class="mt-3 text-sm font-semibold text-highlighted">
         No se encontraron tickets
       </h3>
-      <p class="mt-1 max-w-sm text-xs text-slate-500">
+      <p class="mt-1 max-w-sm text-xs text-muted">
         No hay incidencias que coincidan con los filtros aplicados en la bandeja de soporte.
       </p>
       <UButton
@@ -276,109 +396,144 @@ onMounted(async () => {
         color="gray"
         variant="outline"
         size="xs"
+        icon="i-lucide-rotate-ccw"
         @click="handleResetFilters"
       >
         Restablecer filtros
       </UButton>
     </div>
 
-    <!-- Desktop / Tablet Table View -->
-    <div v-else class="hidden overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm md:block">
-      <div class="overflow-x-auto">
-        <table class="w-full text-left text-sm text-slate-600">
-          <thead class="border-b border-slate-200 bg-slate-50/80 text-xs font-semibold uppercase tracking-wider text-slate-500">
-            <tr>
-              <th scope="col" class="px-4 py-3">Radicado</th>
-              <th scope="col" class="px-4 py-3">Empresa</th>
-              <th scope="col" class="px-4 py-3">Asunto y Módulo</th>
-              <th scope="col" class="px-4 py-3">Canal</th>
-              <th scope="col" class="px-4 py-3">Prioridad</th>
-              <th scope="col" class="px-4 py-3">Estado</th>
-              <th scope="col" class="px-4 py-3">Responsable</th>
-              <th scope="col" class="px-4 py-3">Fecha</th>
-              <th scope="col" class="px-4 py-3 text-right">Acción</th>
-            </tr>
-          </thead>
-          <tbody class="divide-y divide-slate-100">
-            <tr
-              v-for="ticket in tickets"
-              :key="ticket.id"
-              class="hover:bg-slate-50/70 transition-colors"
+    <!-- High-Density Desktop Table View (UTable) -->
+    <div v-else class="hidden overflow-hidden rounded-xl border border-default bg-default shadow-xs md:block">
+      <UTable
+        :columns="columns"
+        :rows="tickets"
+        :loading="isLoading"
+        data-testid="support-tickets-table"
+        :ui="{
+          wrapper: 'relative overflow-x-auto',
+          base: 'min-w-full divide-y divide-default',
+          thead: 'bg-muted',
+          th: {
+            base: 'text-left rtl:text-right',
+            padding: 'py-2 px-3',
+            color: 'text-muted',
+            font: 'font-semibold text-[11px] uppercase tracking-wide',
+          },
+          tbody: 'divide-y divide-default bg-default',
+          tr: {
+            base: 'hover:bg-muted/50 transition-colors',
+          },
+          td: {
+            base: 'whitespace-nowrap',
+            padding: 'py-2 px-3',
+            color: 'text-default',
+            size: 'text-xs',
+          },
+        }"
+      >
+        <!-- Radicado column -->
+        <template #radicado-data="{ row }">
+          <NuxtLink
+            :to="`/support/tickets/${row.id}`"
+            class="font-mono text-xs font-semibold text-primary-700 dark:text-primary-400 tabular-nums hover:underline"
+          >
+            {{ row.radicado }}
+          </NuxtLink>
+        </template>
+
+        <!-- Empresa column -->
+        <template #empresa-data="{ row }">
+          <span class="inline-flex max-w-[10rem] truncate text-xs font-medium text-highlighted" :title="row.empresa?.nombre">
+            {{ row.empresa?.nombre || '—' }}
+          </span>
+        </template>
+
+        <!-- Asunto y Módulo column -->
+        <template #asunto-data="{ row }">
+          <div class="max-w-xs">
+            <p class="truncate text-xs font-medium text-highlighted" :title="row.asunto">
+              {{ row.asunto }}
+            </p>
+            <p class="truncate text-[11px] text-muted">
+              {{ row.modulo?.nombre || 'Módulo general' }}
+            </p>
+          </div>
+        </template>
+
+        <!-- Canal column -->
+        <template #canal-data="{ row }">
+          <span class="inline-flex items-center gap-1.5 text-xs text-muted">
+            <UIcon :name="getChannelIcon(row.canal_origen)" class="h-3.5 w-3.5 text-muted shrink-0" />
+            <span>{{ row.canal_origen || 'Portal' }}</span>
+          </span>
+        </template>
+
+        <!-- Prioridad column -->
+        <template #prioridad-data="{ row }">
+          <UBadge
+            :color="getTicketPriorityPresentation(row.prioridad).color"
+            variant="subtle"
+            size="xs"
+            class="rounded-md font-medium text-xs"
+          >
+            <UIcon :name="getPriorityIcon(row.prioridad)" class="w-3 h-3 mr-1" />
+            {{ getTicketPriorityPresentation(row.prioridad).label }}
+          </UBadge>
+        </template>
+
+        <!-- Estado column -->
+        <template #estado-data="{ row }">
+          <UBadge
+            :color="getTicketStatusPresentation(row.estado).color"
+            variant="subtle"
+            size="xs"
+            class="rounded-md font-medium text-xs"
+          >
+            <UIcon :name="getStatusIcon(row.estado)" class="w-3 h-3 mr-1" />
+            {{ getTicketStatusPresentation(row.estado).label }}
+          </UBadge>
+        </template>
+
+        <!-- Responsable column -->
+        <template #responsable-data="{ row }">
+          <span
+            v-if="row.responsable"
+            class="text-xs font-medium text-default"
+          >
+            {{ row.responsable.nombre }}
+          </span>
+          <span
+            v-else
+            class="inline-block rounded bg-amber-50 dark:bg-amber-950/40 px-1.5 py-0.5 text-[11px] font-medium text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-800"
+          >
+            Sin asignar
+          </span>
+        </template>
+
+        <!-- Fecha column -->
+        <template #fecha-data="{ row }">
+          <span class="text-xs text-muted tabular-nums">
+            {{ formatTicketDate(row.fecha_creacion) }}
+          </span>
+        </template>
+
+        <!-- Accion rápida column -->
+        <template #actions-data="{ row }">
+          <div class="text-right">
+            <UButton
+              :to="`/support/tickets/${row.id}`"
+              color="gray"
+              variant="outline"
+              size="xs"
+              icon="i-lucide-arrow-up-right"
+              class="font-medium"
             >
-              <td class="whitespace-nowrap px-4 py-3.5 font-mono text-xs font-semibold text-primary-700">
-                <NuxtLink :to="`/support/tickets/${ticket.id}`" class="hover:underline">
-                  {{ ticket.radicado }}
-                </NuxtLink>
-              </td>
-              <td class="px-4 py-3.5">
-                <span class="inline-flex max-w-[10rem] truncate text-xs font-medium text-slate-900" :title="ticket.empresa?.nombre">
-                  {{ ticket.empresa?.nombre || '—' }}
-                </span>
-              </td>
-              <td class="px-4 py-3.5">
-                <p class="max-w-xs truncate text-xs font-medium text-slate-900" :title="ticket.asunto">
-                  {{ ticket.asunto }}
-                </p>
-                <p class="text-[11px] text-slate-500 truncate max-w-xs">
-                  {{ ticket.modulo?.nombre || 'Módulo general' }}
-                </p>
-              </td>
-              <td class="whitespace-nowrap px-4 py-3.5 text-xs text-slate-600">
-                <span class="inline-flex items-center gap-1">
-                  <UIcon name="i-heroicons-paper-airplane" class="h-3.5 w-3.5 text-slate-400" />
-                  {{ ticket.canal_origen || 'Portal' }}
-                </span>
-              </td>
-              <td class="whitespace-nowrap px-4 py-3.5">
-                <UBadge
-                  :color="getTicketPriorityPresentation(ticket.prioridad).color"
-                  variant="subtle"
-                  size="xs"
-                >
-                  {{ getTicketPriorityPresentation(ticket.prioridad).label }}
-                </UBadge>
-              </td>
-              <td class="whitespace-nowrap px-4 py-3.5">
-                <UBadge
-                  :color="getTicketStatusPresentation(ticket.estado).color"
-                  variant="subtle"
-                  size="xs"
-                >
-                  {{ getTicketStatusPresentation(ticket.estado).label }}
-                </UBadge>
-              </td>
-              <td class="px-4 py-3.5 text-xs">
-                <span
-                  v-if="ticket.responsable"
-                  class="font-medium text-slate-700"
-                >
-                  {{ ticket.responsable.nombre }}
-                </span>
-                <span
-                  v-else
-                  class="inline-block rounded bg-amber-50 px-1.5 py-0.5 text-[11px] font-medium text-amber-700 border border-amber-200/60"
-                >
-                  Sin asignar
-                </span>
-              </td>
-              <td class="whitespace-nowrap px-4 py-3.5 text-xs text-slate-500">
-                {{ formatTicketDate(ticket.fecha_creacion) }}
-              </td>
-              <td class="whitespace-nowrap px-4 py-3.5 text-right">
-                <UButton
-                  :to="`/support/tickets/${ticket.id}`"
-                  color="gray"
-                  variant="outline"
-                  size="xs"
-                  icon="i-heroicons-arrow-top-right-on-square"
-                >
-                  Gestionar
-                </UButton>
-              </td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
+              Gestionar
+            </UButton>
+          </div>
+        </template>
+      </UTable>
     </div>
 
     <!-- Mobile Card View (md:hidden) -->
@@ -386,61 +541,69 @@ onMounted(async () => {
       <article
         v-for="ticket in tickets"
         :key="ticket.id"
-        class="rounded-xl border border-slate-200 bg-white p-4 shadow-sm"
+        class="rounded-xl border border-default bg-default p-4 shadow-xs"
       >
         <div class="flex items-center justify-between gap-2">
-          <span class="font-mono text-xs font-semibold text-primary-700">
+          <NuxtLink
+            :to="`/support/tickets/${ticket.id}`"
+            class="font-mono text-xs font-semibold text-primary-700 dark:text-primary-400 tabular-nums hover:underline"
+          >
             {{ ticket.radicado }}
-          </span>
+          </NuxtLink>
           <UBadge
             :color="getTicketStatusPresentation(ticket.estado).color"
             variant="subtle"
             size="xs"
+            class="rounded-md font-medium text-xs"
           >
+            <UIcon :name="getStatusIcon(ticket.estado)" class="w-3 h-3 mr-1" />
             {{ getTicketStatusPresentation(ticket.estado).label }}
           </UBadge>
         </div>
 
-        <div class="mt-2">
-          <span class="text-xs font-medium text-amber-800 bg-amber-50 px-2 py-0.5 rounded-md inline-block">
+        <div class="mt-2.5">
+          <span class="text-xs font-medium text-amber-800 dark:text-amber-300 bg-amber-50 dark:bg-amber-950/40 px-2 py-0.5 rounded-md inline-block border border-amber-200 dark:border-amber-800">
             {{ ticket.empresa?.nombre }}
           </span>
-          <h2 class="mt-1 text-sm font-semibold text-slate-900">
+          <h2 class="mt-1 text-sm font-semibold text-highlighted">
             {{ ticket.asunto }}
           </h2>
-          <p class="text-xs text-slate-500">
+          <p class="text-xs text-muted">
             {{ ticket.modulo?.nombre }} · Canal: {{ ticket.canal_origen || 'Portal' }}
           </p>
         </div>
 
-        <div class="mt-3 flex items-center justify-between border-t border-slate-100 pt-2.5 text-xs text-slate-500">
-          <div>
-            Prioridad:
+        <div class="mt-3 flex items-center justify-between border-t border-default pt-2.5 text-xs text-muted">
+          <div class="flex items-center gap-1.5">
+            <span>Prioridad:</span>
             <UBadge
               :color="getTicketPriorityPresentation(ticket.prioridad).color"
               variant="subtle"
               size="xs"
-              class="ml-1"
+              class="rounded-md font-medium text-xs"
             >
+              <UIcon :name="getPriorityIcon(ticket.prioridad)" class="w-3 h-3 mr-1" />
               {{ getTicketPriorityPresentation(ticket.prioridad).label }}
             </UBadge>
           </div>
-          <div>
+          <span class="tabular-nums">
             {{ formatTicketDate(ticket.fecha_creacion) }}
-          </div>
+          </span>
         </div>
 
-        <div class="mt-3 flex items-center justify-between border-t border-slate-100 pt-2.5">
-          <span class="text-xs text-slate-600">
-            <span class="font-medium">Responsable:</span>
+        <div class="mt-3 flex items-center justify-between border-t border-default pt-2.5">
+          <span class="text-xs text-default">
+            <span class="font-medium text-muted">Responsable:</span>
             {{ ticket.responsable?.nombre || 'Sin asignar' }}
           </span>
 
           <UButton
             :to="`/support/tickets/${ticket.id}`"
-            color="primary"
-            variant="soft"
+            color="gray"
+            variant="outline"
             size="xs"
+            icon="i-lucide-arrow-up-right"
+            class="font-medium"
           >
             Gestionar
           </UButton>
@@ -451,12 +614,12 @@ onMounted(async () => {
     <!-- Pagination Footer -->
     <div
       v-if="!isLoading && totalTickets > 0"
-      class="flex flex-col items-center justify-between gap-3 border-t border-slate-200 bg-white px-4 py-3 sm:flex-row sm:rounded-xl sm:border sm:px-6 sm:shadow-sm"
+      class="flex flex-col items-center justify-between gap-3 rounded-xl border border-default bg-default px-4 py-3 sm:flex-row sm:px-5 shadow-xs"
     >
-      <div class="text-xs text-slate-600">
-        Mostrando página <span class="font-medium text-slate-900">{{ currentPage }}</span> de
-        <span class="font-medium text-slate-900">{{ totalPages }}</span>
-        (<span class="font-medium text-slate-900">{{ totalTickets }}</span> tickets en total)
+      <div class="text-xs text-muted">
+        Mostrando página <span class="font-semibold text-highlighted tabular-nums">{{ currentPage }}</span> de
+        <span class="font-semibold text-highlighted tabular-nums">{{ totalPages }}</span>
+        (<span class="font-semibold text-highlighted tabular-nums">{{ totalTickets }}</span> tickets en total)
       </div>
 
       <div class="flex items-center gap-2">
@@ -464,7 +627,7 @@ onMounted(async () => {
           color="gray"
           variant="outline"
           size="xs"
-          icon="i-heroicons-chevron-left"
+          icon="i-lucide-chevron-left"
           :disabled="!hasPreviousPage || isLoading"
           @click="selectPage(currentPage - 1)"
         >
@@ -474,7 +637,7 @@ onMounted(async () => {
           color="gray"
           variant="outline"
           size="xs"
-          trailing-icon="i-heroicons-chevron-right"
+          trailing-icon="i-lucide-chevron-right"
           :disabled="!hasNextPage || isLoading"
           @click="selectPage(currentPage + 1)"
         >

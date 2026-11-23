@@ -30,12 +30,12 @@ const emit = defineEmits<{
 
       <div v-if="campos.pantalla || campos.pestana_o_documento" class="flex justify-between items-start gap-2">
         <span class="text-muted font-medium shrink-0">Pantalla:</span>
-        <span class="font-medium text-highlighted text-right truncate max-w-[180px]">{{ campos.pantalla || campos.pestana_o_documento }}</span>
+        <span class="font-medium text-highlighted text-right truncate max-w-[180px] sm:max-w-xs md:max-w-md">{{ campos.pantalla || campos.pestana_o_documento }}</span>
       </div>
 
       <div v-if="campos.asunto" class="flex justify-between items-start gap-2">
         <span class="text-muted font-medium shrink-0">Asunto:</span>
-        <span class="font-medium text-highlighted text-right truncate max-w-[180px]">{{ campos.asunto }}</span>
+        <span class="font-medium text-highlighted text-right truncate max-w-[180px] sm:max-w-xs md:max-w-md">{{ campos.asunto }}</span>
       </div>
 
       <div v-if="campos.descripcion" class="pt-1 border-t border-default">

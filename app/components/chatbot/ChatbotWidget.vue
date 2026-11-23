@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, reactive, nextTick, onMounted } from 'vue'
+import { ref, computed, nextTick, onMounted, onUnmounted } from 'vue'
 import {
   chatbotService,
   type ChatMessage,
@@ -26,6 +26,107 @@ const isOpen = ref<boolean>(props.initialOpen)
 const inputMessage = ref<string>('')
 const isTyping = ref<boolean>(false)
 const messagesContainer = ref<HTMLElement | null>(null)
+
+// Resizable window state (FE-10 enhancement)
+const width = ref<number>(440)
+const height = ref<number>(600)
+const isResizing = ref<boolean>(false)
+const isMaximized = ref<boolean>(false)
+const preMaximizeDims = ref<{ width: number; height: number }>({ width: 440, height: 600 })
+const isDesktop = ref<boolean>(typeof window !== 'undefined' ? window.innerWidth >= 640 : false)
+
+const checkDesktop = () => {
+  if (typeof window !== 'undefined') {
+    isDesktop.value = window.innerWidth >= 640
+  }
+}
+
+const drawerStyle = computed(() => {
+  if (!isDesktop.value) return {}
+  return {
+    width: `${width.value}px`,
+    height: `${height.value}px`,
+  }
+})
+
+const toggleMaximize = () => {
+  if (isMaximized.value) {
+    width.value = preMaximizeDims.value.width
+    height.value = preMaximizeDims.value.height
+    isMaximized.value = false
+  } else {
+    preMaximizeDims.value = { width: width.value, height: height.value }
+    if (typeof window !== 'undefined') {
+      width.value = Math.min(window.innerWidth - 32, 840)
+      height.value = Math.min(window.innerHeight - 110, 780)
+    } else {
+      width.value = 800
+      height.value = 720
+    }
+    isMaximized.value = true
+  }
+  scrollToBottom()
+}
+
+type ResizeDirection = 'left' | 'top' | 'top-left'
+
+let cleanupResizeListeners: (() => void) | null = null
+
+const startResize = (direction: ResizeDirection, event: PointerEvent) => {
+  if (typeof window === 'undefined' || window.innerWidth < 640) return
+  event.preventDefault()
+  isResizing.value = true
+  isMaximized.value = false
+
+  const startX = event.clientX
+  const startY = event.clientY
+  const startWidth = width.value
+  const startHeight = height.value
+
+  const prevCursor = document.body.style.cursor
+  const prevUserSelect = document.body.style.userSelect
+
+  if (direction === 'top-left') {
+    document.body.style.cursor = 'nwse-resize'
+  } else if (direction === 'left') {
+    document.body.style.cursor = 'ew-resize'
+  } else if (direction === 'top') {
+    document.body.style.cursor = 'ns-resize'
+  }
+  document.body.style.userSelect = 'none'
+
+  const onPointerMove = (e: PointerEvent) => {
+    if (!isResizing.value) return
+
+    if (direction === 'left' || direction === 'top-left') {
+      const deltaX = startX - e.clientX
+      const maxW = Math.min(window.innerWidth - 32, 960)
+      width.value = Math.max(360, Math.min(maxW, startWidth + deltaX))
+    }
+
+    if (direction === 'top' || direction === 'top-left') {
+      const deltaY = startY - e.clientY
+      const maxH = Math.min(window.innerHeight - 110, 880)
+      height.value = Math.max(460, Math.min(maxH, startHeight + deltaY))
+    }
+  }
+
+  const stopResize = () => {
+    isResizing.value = false
+    document.body.style.cursor = prevCursor
+    document.body.style.userSelect = prevUserSelect
+    window.removeEventListener('pointermove', onPointerMove)
+    window.removeEventListener('pointerup', stopResize)
+    window.removeEventListener('pointercancel', stopResize)
+    cleanupResizeListeners = null
+  }
+
+  cleanupResizeListeners = stopResize
+
+  window.addEventListener('pointermove', onPointerMove)
+  window.addEventListener('pointerup', stopResize)
+  window.addEventListener('pointercancel', stopResize)
+}
 
 // Generate or retrieve persistent session ID
 const sessionId = ref<string>('')
@@ -122,11 +223,13 @@ const sendMessageText = async (textToSend: string) => {
 }
 
 const handleSummaryConfirm = () => {
-  sendMessageText('Sí, confirmar y radicar ticket')
+  // Matches backend CONFIRM_KEYWORDS and startsWith('confirm')
+  sendMessageText('confirmar')
 }
 
 const handleSummaryCancel = () => {
-  sendMessageText('Deseo corregir la información ingresada')
+  // Matches backend CANCEL_KEYWORDS and startsWith('cancel')
+  sendMessageText('cancelar')
 }
 
 const handleSend = () => {
@@ -146,7 +249,20 @@ const formatTime = (date: Date): string => {
 }
 
 onMounted(() => {
+  checkDesktop()
+  if (typeof window !== 'undefined') {
+    window.addEventListener('resize', checkDesktop)
+  }
   initializeChat()
+})
+
+onUnmounted(() => {
+  if (cleanupResizeListeners) {
+    cleanupResizeListeners()
+  }
+  if (typeof window !== 'undefined') {
+    window.removeEventListener('resize', checkDesktop)
+  }
 })
 
 defineExpose({
@@ -156,6 +272,11 @@ defineExpose({
   toggleOpen,
   resetChat,
   sendMessageText,
+  width,
+  height,
+  isMaximized,
+  toggleMaximize,
+  startResize,
 })
 </script>
 
@@ -196,12 +317,48 @@ defineExpose({
     >
       <div
         v-if="isOpen"
-        class="fixed bottom-24 right-4 sm:right-6 z-50 w-[calc(100vw-2rem)] sm:w-96 h-[540px] max-h-[85vh] bg-default rounded-2xl shadow-xl border border-default flex flex-col overflow-hidden"
+        class="fixed bottom-24 right-4 sm:right-6 z-50 w-[calc(100vw-2rem)] sm:w-auto h-[540px] sm:h-auto max-h-[90vh] max-w-[95vw] bg-default rounded-2xl shadow-2xl border border-default flex flex-col overflow-hidden relative"
+        :class="{
+          'select-none': isResizing,
+          'transition-[width,height] duration-200 ease-out': !isResizing
+        }"
+        :style="drawerStyle"
         data-testid="chatbot-drawer"
       >
+        <!-- Desktop Resize Handles -->
+        <div
+          v-if="isDesktop"
+          class="hidden sm:flex absolute top-0 left-0 w-6 h-6 cursor-nwse-resize z-40 items-center justify-center group"
+          title="Arrastra para redimensionar ventana"
+          data-testid="chatbot-resize-top-left"
+          @pointerdown="startResize('top-left', $event)"
+        >
+          <div class="w-2.5 h-2.5 border-t-2 border-l-2 border-white/60 group-hover:border-white group-active:border-primary-200 rounded-tl-xs transition-colors" />
+        </div>
+
+        <div
+          v-if="isDesktop"
+          class="hidden sm:block absolute top-6 left-0 bottom-0 w-2.5 cursor-ew-resize z-30 group"
+          title="Arrastra para cambiar el ancho"
+          data-testid="chatbot-resize-left"
+          @pointerdown="startResize('left', $event)"
+        >
+          <div class="w-1 h-full bg-transparent group-hover:bg-primary-500/40 group-active:bg-primary-500/70 transition-colors" />
+        </div>
+
+        <div
+          v-if="isDesktop"
+          class="hidden sm:block absolute top-0 left-6 right-28 h-2.5 cursor-ns-resize z-30 group"
+          title="Arrastra para cambiar el alto"
+          data-testid="chatbot-resize-top"
+          @pointerdown="startResize('top', $event)"
+        >
+          <div class="h-1 w-full bg-transparent group-hover:bg-primary-500/40 group-active:bg-primary-500/70 transition-colors" />
+        </div>
+
         <!-- Header: Sobria cabecera morada con icono sparkles y controles limpios -->
-        <header class="bg-primary-600 dark:bg-primary-700 text-white px-4 py-3 flex items-center justify-between shrink-0 shadow-xs">
-          <div class="flex items-center space-x-2.5 min-w-0">
+        <header class="bg-primary-600 dark:bg-primary-700 text-white px-4 py-3 flex items-center justify-between shrink-0 shadow-xs relative">
+          <div class="flex items-center space-x-2.5 min-w-0 sm:pl-2">
             <div class="w-8 h-8 rounded-full bg-white/15 flex items-center justify-center shrink-0">
               <UIcon name="i-lucide-sparkles" class="w-4 h-4 text-white" />
             </div>
@@ -225,6 +382,15 @@ defineExpose({
               @click="resetChat"
             >
               <UIcon name="i-lucide-rotate-ccw" class="w-4 h-4" />
+            </button>
+            <button
+              type="button"
+              class="hidden sm:inline-flex p-1.5 rounded-lg text-white/80 hover:text-white hover:bg-white/15 transition-colors"
+              :title="isMaximized ? 'Restaurar tamaño' : 'Maximizar asistente'"
+              data-testid="chatbot-maximize-btn"
+              @click="toggleMaximize"
+            >
+              <UIcon :name="isMaximized ? 'i-lucide-minimize-2' : 'i-lucide-maximize-2'" class="w-4 h-4" />
             </button>
             <button
               type="button"

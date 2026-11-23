@@ -234,9 +234,90 @@ describe('ChatbotWidget.vue (FE-10 / RF3, RF6)', () => {
 
     expect(chatbotService.sendChatbotMessage).toHaveBeenCalledWith(
       expect.objectContaining({
-        mensaje: 'Sí, confirmar y radicar ticket',
+        mensaje: 'confirmar',
       })
     )
+  })
+
+  it('handles cancellation from interactive summary card by sending cancelar', async () => {
+    const mockSummaryResponse: ChatbotMessageResponse = {
+      session_id: 'session-xyz',
+      tipo_respuesta: 'RESUMEN',
+      mensaje: 'Por favor revisa el resumen de tu reporte:',
+      campos_recolectados: {
+        modulo_nombre: 'Inventarios',
+        pantalla: 'Ajuste de Stock',
+        asunto: 'Error en kardex',
+        descripcion: 'Cantidades negativas.',
+      },
+    }
+
+    vi.spyOn(chatbotService, 'sendChatbotMessage').mockResolvedValue(mockSummaryResponse)
+
+    const wrapper = mount(ChatbotWidget, {
+      props: { initialOpen: true },
+      global: { stubs: globalStubs },
+    })
+
+    await flushPromises()
+
+    const input = wrapper.find('[data-testid="chatbot-input"]')
+    await input.setValue('Revisar datos')
+    await wrapper.find('form').trigger('submit.prevent')
+    await flushPromises()
+
+    const cancelBtn = wrapper.find('[data-testid="summary-cancel-btn"]')
+    expect(cancelBtn.exists()).toBe(true)
+
+    vi.spyOn(chatbotService, 'sendChatbotMessage').mockResolvedValue({
+      session_id: 'session-xyz',
+      tipo_respuesta: 'PREGUNTA',
+      mensaje: '¿Qué información deseas corregir?',
+    })
+
+    await cancelBtn.trigger('click')
+    await flushPromises()
+
+    expect(chatbotService.sendChatbotMessage).toHaveBeenCalledWith(
+      expect.objectContaining({
+        mensaje: 'cancelar',
+      })
+    )
+  })
+
+  it('supports maximizing, restoring, and provides desktop resize handles', async () => {
+    const wrapper = mount(ChatbotWidget, {
+      props: { initialOpen: true },
+      global: { stubs: globalStubs },
+    })
+
+    await flushPromises()
+
+    // Verify resize handles exist
+    expect(wrapper.find('[data-testid="chatbot-resize-top-left"]').exists()).toBe(true)
+    expect(wrapper.find('[data-testid="chatbot-resize-left"]').exists()).toBe(true)
+    expect(wrapper.find('[data-testid="chatbot-resize-top"]').exists()).toBe(true)
+
+    // Verify maximize button
+    const maxBtn = wrapper.find('[data-testid="chatbot-maximize-btn"]')
+    expect(maxBtn.exists()).toBe(true)
+
+    // Initial state: not maximized
+    expect(wrapper.vm.isMaximized).toBe(false)
+    const initialWidth = wrapper.vm.width
+    const initialHeight = wrapper.vm.height
+
+    // Click maximize
+    await maxBtn.trigger('click')
+    expect(wrapper.vm.isMaximized).toBe(true)
+    expect(wrapper.vm.width).toBeGreaterThanOrEqual(initialWidth)
+    expect(wrapper.vm.height).toBeGreaterThanOrEqual(initialHeight)
+
+    // Click restore
+    await maxBtn.trigger('click')
+    expect(wrapper.vm.isMaximized).toBe(false)
+    expect(wrapper.vm.width).toBe(initialWidth)
+    expect(wrapper.vm.height).toBe(initialHeight)
   })
 
   it('renders radicado confirmation card with one-click copy button on ticket creation (FE-11)', async () => {

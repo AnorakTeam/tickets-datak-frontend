@@ -29,6 +29,7 @@ export interface SupportTicketSummary {
   }
   prioridad: TicketPriority
   estado: TicketStatus
+  clasificacion?: string | null
   canal_origen: string
   responsable?: SupportResponsable | null
   fecha_creacion: string

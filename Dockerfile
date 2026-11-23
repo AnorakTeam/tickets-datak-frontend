@@ -1,4 +1,5 @@
-FROM node:22-alpine
+# Multi-stage production build for Nuxt 4 on Cloud Run
+FROM node:22-alpine AS builder
 
 WORKDIR /app
 
@@ -8,16 +9,27 @@ RUN corepack enable && corepack prepare pnpm@latest --activate
 # Copy dependency specifications and configuration
 COPY package.json pnpm-lock.yaml .npmrc* ./
 
-# Install dependencies
+# Install all dependencies required for building
 RUN pnpm install --frozen-lockfile --allow-build=esbuild
 
 # Copy application source code
 COPY . .
 
-# Expose default application port
-EXPOSE 3000
+# Build production bundle (.output)
+RUN pnpm build
 
-ENV HOST=0.0.0.0
-ENV PORT=3000
+# Stage 2: Minimal Production Runtime
+FROM node:22-alpine AS runner
 
-CMD ["pnpm", "dev", "--host", "0.0.0.0", "--port", "3000"]
+WORKDIR /app
+
+ENV NODE_ENV=production \
+    HOST=0.0.0.0 \
+    PORT=8080
+
+# Copy compiled standalone Nitro bundle
+COPY --from=builder /app/.output /app/.output
+
+EXPOSE 8080
+
+CMD ["node", ".output/server/index.mjs"]

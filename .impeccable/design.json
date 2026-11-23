@@ -1,0 +1,15 @@
+{
+  "name": "Datak Tickets Design System",
+  "version": "1.0.0",
+  "source": "datak/app/DESIGN.md",
+  "tokens": {
+    "primary": "#a855f7",
+    "neutral": "slate",
+    "font": "Poppins",
+    "radius": {
+      "sm": "6px",
+      "md": "8px",
+      "lg": "12px"
+    }
+  }
+}

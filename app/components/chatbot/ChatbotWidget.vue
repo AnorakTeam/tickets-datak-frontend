@@ -419,7 +419,7 @@ defineExpose({
         >
           <!-- Message Bubbles -->
           <div
-            v-for="msg in messages"
+            v-for="(msg, idx) in messages"
             :key="msg.id"
             :class="[
               'flex flex-col',
@@ -444,7 +444,7 @@ defineExpose({
               <ChatbotActiveTicketsCard
                 v-if="msg.campos_recolectados?.tickets_activos && msg.campos_recolectados.tickets_activos.length > 0"
                 :tickets="msg.campos_recolectados.tickets_activos"
-                :disabled="isTyping"
+                :disabled="isTyping || idx !== messages.length - 1"
                 @select="sendMessageText"
               />
 
@@ -457,9 +457,9 @@ defineExpose({
 
               <!-- Interactive Incident Summary Card (FE-11) -->
               <ChatbotSummaryCard
-                v-else-if="msg.type === 'RESUMEN' || (msg.campos_recolectados && Object.keys(msg.campos_recolectados).length >= 2)"
+                v-else-if="msg.type === 'RESUMEN' && msg.campos_recolectados"
                 :campos="msg.campos_recolectados"
-                :disabled="isTyping"
+                :disabled="isTyping || idx !== messages.length - 1"
                 @confirm="handleSummaryConfirm"
                 @cancel="handleSummaryCancel"
               />
@@ -503,7 +503,7 @@ defineExpose({
                   :key="opt"
                   type="button"
                   class="text-xs bg-default hover:bg-primary-50 text-highlighted hover:text-primary-700 hover:border-primary-300 dark:hover:bg-primary-950/40 dark:hover:text-primary-300 font-medium py-1 px-2.5 rounded-lg border border-default transition-all shadow-xs inline-flex items-center gap-1 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
-                  :disabled="isTyping"
+                  :disabled="isTyping || idx !== messages.length - 1"
                   data-testid="bot-option-chip"
                   @click="handleQuickChip(opt)"
                 >
